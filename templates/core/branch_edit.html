@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit {{ branch.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Edit {{ branch.name }}</h1>
+    <a href="{% url 'core:branch_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Branches
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Branch Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Branch Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ branch.name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone Number *</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ branch.phone }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address *</label>
+                        <textarea class="form-control" id="address" name="address" rows="3" 
+                                  required>{{ branch.address }}</textarea>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ branch.email }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="opening_time" class="form-label">Opening Time *</label>
+                            <input type="time" class="form-control" id="opening_time" name="opening_time" 
+                                   value="{{ branch.opening_time|time:'H:i' }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="closing_time" class="form-label">Closing Time *</label>
+                            <input type="time" class="form-control" id="closing_time" name="closing_time" 
+                                   value="{{ branch.closing_time|time:'H:i' }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                               {% if branch.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">
+                            Active Branch
+                        </label>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> Update Branch
+                        </button>
+                        <a href="{% url 'core:branch_list' %}" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

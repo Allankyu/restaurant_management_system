@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Order #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Order #{{ order.order_number }}</h1>
+        <a href="{% url 'orders:order_management' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Orders
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Order Information -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Order Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Order Number:</strong><br>
+                            <strong>Customer:</strong><br>
+                            <strong>Phone:</strong><br>
+                            <strong>Order Type:</strong><br>
+                            <strong>Status:</strong><br>
+                            <strong>Created:</strong><br>
+                            {% if order.order_type == 'delivery' %}
+                            <strong>Delivery Address:</strong><br>
+                            {% endif %}
+                            <strong>Total Amount:</strong>
+                        </div>
+                        <div class="col-6">
+                            {{ order.order_number }}<br>
+                            {{ order.customer.name }}<br>
+                            {{ order.customer.phone }}<br>
+                            {{ order.get_order_type_display }}<br>
+                            <span class="badge bg-{% if order.status == 'pending' %}warning{% elif order.status == 'confirmed' %}info{% elif order.status == 'preparing' %}primary{% elif order.status == 'ready' %}success{% elif order.status == 'delivered' %}secondary{% else %}danger{% endif %}">
+                                {{ order.get_status_display }}
+                            </span><br>
+                            {{ order.created_at|date:"M d, Y H:i" }}<br>
+                            {% if order.order_type == 'delivery' %}
+                            {{ order.delivery_address }}<br>
+                            {% endif %}
+                            <strong>Ksh {{ order.total_amount }}</strong>
+                        </div>
+                    </div>
+                    
+                    {% if order.notes %}
+                    <div class="mt-3">
+                        <strong>Notes:</strong>
+                        <p class="mb-0">{{ order.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Actions -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Order Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if order.status == 'pending' %}
+                        <a href="{% url 'orders:update_order_status' order.id %}?status=confirmed" 
+                           class="btn btn-success">Confirm Order</a>
+                        <a href="{% url 'orders:update_order_status' order.id %}?status=cancelled" 
+                           class="btn btn-danger">Cancel Order</a>
+                        {% elif order.status == 'confirmed' %}
+                        <a href="{% url 'orders:update_order_status' order.id %}?status=preparing" 
+                           class="btn btn-primary">Start Preparing</a>
+                        {% elif order.status == 'preparing' %}
+                        <a href="{% url 'orders:update_order_status' order.id %}?status=ready" 
+                           class="btn btn-warning">Mark as Ready</a>
+                        {% elif order.status == 'ready' and order.order_type == 'delivery' %}
+                        <a href="{% url 'orders:update_order_status' order.id %}?status=out_for_delivery" 
+                           class="btn btn-info">Out for Delivery</a>
+                        {% elif order.status == 'ready' or order.status == 'out_for_delivery' %}
+                        <a href="{% url 'orders:update_order_status' order.id %}?status=delivered" 
+                           class="btn btn-success">Mark as Delivered/Served</a>
+                        {% endif %}
+                        
+                        <a href="{% url 'orders:print_receipt' order.id %}" target="_blank" 
+                           class="btn btn-outline-primary">Print Receipt</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Order Items</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Total</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order_items %}
+                        <tr>
+                            <td>
+                                {{ item.menu_item.name }}
+                                {% if item.is_custom_combo %}
+                                <br><small class="text-muted">Custom Combo</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.quantity }}</td>
+                            <td>Ksh {{ item.unit_price }}</td>
+                            <td>Ksh {{ item.subtotal }}</td>
+                            <td>
+                                {% if item.notes %}
+                                <small class="text-muted">{{ item.notes }}</small>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
+                            <td colspan="2"><strong>Ksh {{ order.total_amount }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

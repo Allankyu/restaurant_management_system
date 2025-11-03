@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}Customer Analytics Report{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1><i class="fas fa-users"></i> Customer Analytics Report</h1>
+        <p class="text-muted mb-0">Customer behavior, loyalty, and spending patterns</p>
+    </div>
+    <div>
+        <a href="{% url 'reports:reports_dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Reports
+        </a>
+    </div>
+</div>
+
+<!-- Customer Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h3>{{ customer_stats.total_customers }}</h3>
+                <p class="mb-0">Total Customers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h3>{{ customer_stats.repeat_customers }}</h3>
+                <p class="mb-0">Repeat Customers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h3>{{ customer_stats.total_orders }}</h3>
+                <p class="mb-0">Total Orders</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body text-center">
+                <h3>₹{{ customer_stats.average_order_value|floatformat:2 }}</h3>
+                <p class="mb-0">Avg Order Value</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Top Customers -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-trophy"></i> Top Customers by Spending</h5>
+            </div>
+            <div class="card-body">
+                {% if top_customers %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Orders</th>
+                                <th>Total Spent</th>
+                                <th>Avg Order</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in top_customers %}
+                            <tr>
+                                <td>
+                                    <strong>{{ customer.customer_name|default:"Walk-in" }}</strong>
+                                    {% if customer.customer_phone %}
+                                    <br><small class="text-muted">{{ customer.customer_phone }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ customer.total_orders }}</td>
+                                <td>₹{{ customer.total_spent|floatformat:2 }}</td>
+                                <td>₹{{ customer.avg_order_value|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No customer data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Frequency -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Most Frequent Customers</h5>
+            </div>
+            <div class="card-body">
+                {% if customer_frequency %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Customer Phone</th>
+                                <th>Visits</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in customer_frequency %}
+                            <tr>
+                                <td>{{ customer.customer_phone|default:"No phone" }}</td>
+                                <td>{{ customer.visit_count }}</td>
+                                <td>
+                                    {% if customer.visit_count > 5 %}
+                                    <span class="badge bg-success">VIP</span>
+                                    {% elif customer.visit_count > 2 %}
+                                    <span class="badge bg-warning">Regular</span>
+                                    {% else %}
+                                    <span class="badge bg-info">New</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No frequency data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Insights -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Customer Insights</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center p-3">
+                            <i class="fas fa-user-friends fa-2x text-primary mb-2"></i>
+                            <h5>Customer Loyalty</h5>
+                            <p class="text-muted">
+                                {% if customer_stats.repeat_customers > 0 %}
+                                {{ customer_stats.repeat_customers }} customers have visited more than once
+                                {% else %}
+                                Encourage repeat visits with loyalty programs
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3">
+                            <i class="fas fa-money-bill-wave fa-2x text-success mb-2"></i>
+                            <h5>Spending Patterns</h5>
+                            <p class="text-muted">
+                                Average customer spends ₹{{ customer_stats.average_order_value|floatformat:2 }} per visit
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3">
+                            <i class="fas fa-chart-pie fa-2x text-info mb-2"></i>
+                            <h5>Growth Opportunities</h5>
+                            <p class="text-muted">
+                                Focus on converting first-time visitors to regular customers
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-download"></i> Export Customer Report</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <button class="btn btn-outline-primary w-100" onclick="generateCustomerReport('pdf')">
+                            <i class="fas fa-file-pdf"></i> Export as PDF
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-outline-success w-100" onclick="generateCustomerReport('excel')">
+                            <i class="fas fa-file-excel"></i> Export as Excel
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-outline-secondary w-100" onclick="generateCustomerReport('csv')">
+                            <i class="fas fa-file-csv"></i> Export as CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function generateCustomerReport(format) {
+    // Set up customer report in generator on main reports page
+    localStorage.setItem('autoGenerateReport', JSON.stringify({
+        type: 'customer',
+        format: format
+    }));
+    
+    // Redirect to main reports page
+    window.location.href = "{% url 'reports:reports_dashboard' %}";
+}
+</script>
+{% endblock %}

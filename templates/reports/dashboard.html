@@ -1,0 +1,881 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if is_admin %}
+        {% if selected_branch %}Reports - {{ selected_branch.name }}{% else %}System Reports - Admin{% endif %}
+    {% else %}
+        Reports Dashboard
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>
+            {% if is_admin %}
+                <i class="fas fa-chart-bar"></i> 
+                {% if selected_branch %}
+                    {{ selected_branch.name }} Reports
+                {% else %}
+                    System Reports
+                {% endif %}
+            {% else %}
+                <i class="fas fa-chart-bar"></i> Reports & Analytics
+            {% endif %}
+        </h1>
+        {% if is_admin %}
+            <p class="text-muted mb-0">
+                {% if selected_branch %}
+                    Viewing reports for <strong>{{ selected_branch.name }}</strong>
+                {% else %}
+                    System-wide reports across all branches
+                {% endif %}
+            </p>
+        {% else %}
+            <p class="text-muted mb-0">Performance analytics and insights</p>
+        {% endif %}
+    </div>
+    <div class="dropdown">
+        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="fas fa-download"></i> Export Reports
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" onclick="generateQuickReport('sales', 'pdf')">Sales PDF</a></li>
+            <li><a class="dropdown-item" href="#" onclick="generateQuickReport('inventory', 'excel')">Inventory Excel</a></li>
+            <li><a class="dropdown-item" href="#" onclick="generateQuickReport('financial', 'csv')">Financial CSV</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- Branch Selector for Admins -->
+{% if is_admin %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-store"></i> Branch Selection</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <select class="form-select" onchange="location = this.value;">
+                    <option value="?branch=all" {% if not selected_branch %}selected{% endif %}>
+                        All Branches (System Wide)
+                    </option>
+                    {% for branch in branches %}
+                    <option value="?branch={{ branch.id }}" 
+                            {% if selected_branch and selected_branch.id == branch.id %}selected{% endif %}>
+                        {{ branch.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        {% if selected_branch %}
+        <div class="mt-2">
+            <span class="badge bg-info">
+                <i class="fas fa-store"></i> Viewing: {{ selected_branch.name }}
+            </span>
+        </div>
+        {% else %}
+        <div class="mt-2">
+            <span class="badge bg-warning">
+                <i class="fas fa-building"></i> System Overview: All Branches
+            </span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if is_admin and not selected_branch %}
+<div class="alert alert-info mb-4">
+    <i class="fas fa-info-circle"></i> 
+    <strong>System Overview:</strong> Showing combined statistics from all branches. 
+    Select a specific branch from the dropdown to view individual branch reports.
+</div>
+{% endif %}
+
+<!-- UPDATED: Report Cards Section with Clickable Cards -->
+<div class="row">
+    <!-- Sales Reports Card -->
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-primary clickable-card" onclick="navigateToReport('sales')">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-3x mb-3"></i>
+                <h4>Sales Reports</h4>
+                <p class="mb-0">Revenue analysis and sales trends</p>
+                <div class="mt-3">
+                    <span class="badge bg-light text-primary">View Sales</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Inventory Reports Card -->
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-warning clickable-card" onclick="navigateToReport('inventory')">
+            <div class="card-body text-center">
+                <i class="fas fa-boxes fa-3x mb-3"></i>
+                <h4>Inventory Reports</h4>
+                <p class="mb-0">Stock levels and inventory analysis</p>
+                <div class="mt-3">
+                    <span class="badge bg-light text-warning">View Inventory</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Financial Reports Card -->
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-success clickable-card" onclick="navigateToReport('financial')">
+            <div class="card-body text-center">
+                <i class="fas fa-money-bill-wave fa-3x mb-3"></i>
+                <h4>Financial Reports</h4>
+                <p class="mb-0">Financial performance and metrics</p>
+                <div class="mt-3">
+                    <span class="badge bg-light text-success">View Financial</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Customer Reports Card -->
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-info clickable-card" onclick="navigateToReport('customer')">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-3x mb-3"></i>
+                <h4>Customer Reports</h4>
+                <p class="mb-0">Customer behavior and loyalty</p>
+                <div class="mt-3">
+                    <span class="badge bg-light text-info">View Customer</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Statistics Section -->
+<div class="row mt-4">
+    <div class="col-md-{% if is_admin %}8{% else %}12{% endif %}">
+        <div class="card">
+            <div class="card-header">
+                <h5>Quick Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-primary">₹{{ weekly_sales|default:"0" }}</h4>
+                            <small class="text-muted">Weekly Sales</small>
+                            {% if is_admin and selected_branch %}
+                            <br><small class="text-primary">{{ selected_branch.name }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-success">{{ total_orders|default:"0" }}</h4>
+                            <small class="text-muted">Total Orders</small>
+                            {% if is_admin and selected_branch %}
+                            <br><small class="text-success">{{ selected_branch.name }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-warning">{{ low_stock_count|default:"0" }}</h4>
+                            <small class="text-muted">Low Stock Items</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-info">{{ active_customers|default:"0" }}</h4>
+                            <small class="text-muted">Active Customers</small>
+                            {% if is_admin and selected_branch %}
+                            <br><small class="text-info">{{ selected_branch.name }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Admin-only Additional Statistics -->
+    {% if is_admin %}
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Admin Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-12 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-success">{{ total_branches|default:"1" }}</h4>
+                            <small class="text-muted">Total Branches</small>
+                        </div>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-info">₹{{ today_revenue|default:"0" }}</h4>
+                            <small class="text-muted">Today's Revenue</small>
+                        </div>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-warning">₹{{ monthly_revenue|default:"0" }}</h4>
+                            <small class="text-muted">Monthly Revenue</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Branch Quick Access for Admin -->
+{% if is_admin and branches.count > 1 %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-store"></i> Quick Branch Access</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for branch in branches %}
+                    <div class="col-md-3 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h6>{{ branch.name }}</h6>
+                                <p class="text-muted small mb-2">
+                                    <i class="fas fa-users"></i> {{ branch.employee_set.count }} employees<br>
+                                    <i class="fas fa-shopping-cart"></i> {{ branch.order_set.count }} orders
+                                </p>
+                                <a href="?branch={{ branch.id }}" class="btn btn-outline-primary btn-sm w-100">
+                                    View Reports
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- UPDATED: Added ID for scrolling to report generator -->
+<div class="row mt-4" id="reportGeneratorSection">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Recent Report Activity</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Daily Sales Report</h6>
+                            <small>Today</small>
+                        </div>
+                        <p class="mb-1">Generated daily sales summary</p>
+                        {% if is_admin and selected_branch %}
+                        <small class="text-muted">{{ selected_branch.name }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Inventory Audit</h6>
+                            <small>2 days ago</small>
+                        </div>
+                        <p class="mb-1">Completed monthly inventory count</p>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Financial Statement</h6>
+                            <small>1 week ago</small>
+                        </div>
+                        <p class="mb-1">Monthly financial performance review</p>
+                        {% if is_admin and not selected_branch %}
+                        <small class="text-muted">System Wide</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Report Generation</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Report Type</label>
+                            <select class="form-select" id="reportType">
+                                <option value="sales">Sales Summary</option>
+                                <option value="inventory">Inventory Status</option>
+                                <option value="financial">Financial Overview</option>
+                                <option value="customer">Customer Analytics</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Date Range</label>
+                            <select class="form-select" id="dateRange">
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month" selected>This Month</option>
+                                <option value="last_month">Last Month</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Format</label>
+                            <select class="form-select" id="reportFormat">
+                                <option value="pdf">PDF Document</option>
+                                <option value="excel">Excel Spreadsheet</option>
+                                <option value="csv">CSV Data</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Custom Date Range (Hidden by Default) -->
+                <div class="row mb-3" id="customDateRange" style="display: none;">
+                    <div class="col-md-6">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="startDate">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="endDate">
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" id="generateReportBtn">
+                    <i class="fas fa-file-export"></i> Generate & Download Report
+                </button>
+                
+                <!-- Loading Indicator -->
+                <div class="mt-3" id="loadingIndicator" style="display: none;">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">Generating report...</span>
+                    </div>
+                    <span class="ms-2">Generating report, please wait...</span>
+                </div>
+                
+                <!-- Result Message -->
+                <div class="mt-3" id="resultMessage" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Download History Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-download"></i> Recent Downloads
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="downloadHistory">
+                    <p class="text-muted text-center">No recent downloads. Generate a report to see download history here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NEW: Customer Report Modal -->
+<div class="modal fade" id="customerReportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-users me-2"></i>Customer Analytics
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary">{{ active_customers|default:"0" }}</h3>
+                                <p class="text-muted mb-0">Active Customers</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body text-center">
+                                <h3 class="text-success">{{ total_orders|default:"0" }}</h3>
+                                <p class="text-muted mb-0">Total Orders</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Customer Reports</strong> are coming soon! This feature will include:
+                    <ul class="mb-0 mt-2">
+                        <li>Customer loyalty analysis</li>
+                        <li>Purchase behavior patterns</li>
+                        <li>Customer segmentation</li>
+                        <li>Feedback and review analytics</li>
+                    </ul>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn btn-primary" onclick="generateCustomerReport()">
+                        <i class="fas fa-file-export"></i> Generate Customer Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.clickable-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+}
+
+.clickable-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.clickable-card:active {
+    transform: translateY(-2px);
+}
+
+/* Add pulse animation for the customer card to make it more noticeable */
+.bg-info.clickable-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-info.clickable-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.bg-info.clickable-card:hover::before {
+    left: 100%;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Store download history
+let downloadHistory = JSON.parse(localStorage.getItem('reportDownloads') || '[]');
+
+// NEW: Navigation functions for report cards
+function navigateToReport(reportType) {
+    if (reportType === 'customer') {
+        // Show modal for customer reports
+        const customerModal = new bootstrap.Modal(document.getElementById('customerReportModal'));
+        customerModal.show();
+    } else {
+        const reportUrls = {
+            'sales': '{% url "reports:sales_report" %}',
+            'inventory': '{% url "reports:inventory_report" %}',
+            'financial': '{% url "reports:financial_report" %}',
+            'customer': '{% url "reports:customer_report" %}'
+        };
+        
+        const url = reportUrls[reportType];
+        if (url && url !== 'None') {
+            window.location.href = url;
+        } else {
+            showReportInGenerator(reportType);
+        }
+    }
+}
+
+function showReportInGenerator(reportType) {
+    // Set the report type in the form
+    document.getElementById('reportType').value = reportType;
+    
+    // Scroll to the report generator section
+    document.getElementById('reportGeneratorSection').scrollIntoView({ 
+        behavior: 'smooth' 
+    });
+    
+    // Show notification
+    showResult(`🎯 <strong>${getReportDisplayName(reportType)}</strong> selected. Configure your report settings below.`, 'info');
+}
+
+function generateCustomerReport() {
+    // Close modal
+    const customerModal = bootstrap.Modal.getInstance(document.getElementById('customerReportModal'));
+    customerModal.hide();
+    
+    // Set up customer report in generator
+    document.getElementById('reportType').value = 'customer';
+    document.getElementById('reportFormat').value = 'pdf';
+    
+    // Scroll to generator
+    document.getElementById('reportGeneratorSection').scrollIntoView({ 
+        behavior: 'smooth' 
+    });
+    
+    showResult('🎯 <strong>Customer Report</strong> configured. Click "Generate Report" to create your customer analytics report.', 'info');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Get elements
+    const generateBtn = document.getElementById('generateReportBtn');
+    const reportType = document.getElementById('reportType');
+    const dateRange = document.getElementById('dateRange');
+    const reportFormat = document.getElementById('reportFormat');
+    const customDateRange = document.getElementById('customDateRange');
+    const startDate = document.getElementById('startDate');
+    const endDate = document.getElementById('endDate');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const resultMessage = document.getElementById('resultMessage');
+
+    // NEW: Add click effects to cards
+    const cards = document.querySelectorAll('.clickable-card');
+    
+    cards.forEach(card => {
+        // Add hover effects
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.cursor = 'pointer';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+        
+        // Add click effect
+        card.addEventListener('mousedown', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        card.addEventListener('mouseup', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+    });
+
+    // Load download history
+    updateDownloadHistory();
+
+    // Show/hide custom date range
+    dateRange.addEventListener('change', function() {
+        if (this.value === 'custom') {
+            customDateRange.style.display = 'block';
+        } else {
+            customDateRange.style.display = 'none';
+        }
+    });
+
+    // Set default dates for custom range
+    const today = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(today.getMonth() - 1);
+    
+    startDate.value = oneMonthAgo.toISOString().split('T')[0];
+    endDate.value = today.toISOString().split('T')[0];
+
+    // Generate report function
+    generateBtn.addEventListener('click', function() {
+        generateReport();
+    });
+
+    // Also allow Enter key in form fields
+    const formElements = [reportType, dateRange, reportFormat, startDate, endDate];
+    formElements.forEach(element => {
+        element.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                generateReport();
+            }
+        });
+    });
+
+    function generateReport() {
+        // Get form values
+        const selectedReportType = reportType.value;
+        const selectedDateRange = dateRange.value;
+        const selectedFormat = reportFormat.value;
+        
+        let startDateValue = '';
+        let endDateValue = '';
+
+        // Calculate dates based on selection
+        const today = new Date();
+        
+        switch(selectedDateRange) {
+            case 'today':
+                startDateValue = today.toISOString().split('T')[0];
+                endDateValue = today.toISOString().split('T')[0];
+                break;
+            case 'week':
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - today.getDay());
+                startDateValue = startOfWeek.toISOString().split('T')[0];
+                endDateValue = today.toISOString().split('T')[0];
+                break;
+            case 'month':
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                startDateValue = startOfMonth.toISOString().split('T')[0];
+                endDateValue = today.toISOString().split('T')[0];
+                break;
+            case 'last_month':
+                const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                startDateValue = startOfLastMonth.toISOString().split('T')[0];
+                endDateValue = endOfLastMonth.toISOString().split('T')[0];
+                break;
+            case 'custom':
+                startDateValue = startDate.value;
+                endDateValue = endDate.value;
+                break;
+        }
+
+        // Validate custom date range
+        if (selectedDateRange === 'custom') {
+            if (!startDateValue || !endDateValue) {
+                showResult('Please select both start and end dates for custom range.', 'danger');
+                return;
+            }
+            if (new Date(startDateValue) > new Date(endDateValue)) {
+                showResult('Start date cannot be after end date.', 'danger');
+                return;
+            }
+        }
+
+        // Show loading indicator
+        loadingIndicator.style.display = 'block';
+        generateBtn.disabled = true;
+        resultMessage.style.display = 'none';
+
+        // Generate the report file
+        generateReportFile(selectedReportType, selectedFormat, startDateValue, endDateValue, selectedDateRange);
+    }
+
+    function generateReportFile(reportType, format, startDate, endDate, dateRangeType) {
+        const reportName = getReportDisplayName(reportType);
+        const formatName = getFormatDisplayName(format);
+        const fileName = `${reportType}_report_${startDate}_to_${endDate}.${format}`;
+        
+        // Create sample file content based on format
+        let fileContent, mimeType;
+        
+        switch(format) {
+            case 'pdf':
+                // For PDF, we'll create a simple text representation
+                // In a real app, you'd generate actual PDF
+                mimeType = 'application/pdf';
+                fileContent = `%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >>
+endobj
+
+4 0 obj
+<< /Length 100 >>
+stream
+BT
+/F1 12 Tf
+50 750 Td
+(${reportName}) Tj
+0 -20 Td
+(Generated: ${new Date().toLocaleDateString()}) Tj
+0 -20 Td
+(Period: ${startDate} to ${endDate}) Tj
+0 -20 Td
+(Branch: {{ selected_branch.name|default:"All Branches" }}) Tj
+ET
+endstream
+endobj
+
+xref
+0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000234 00000 n 
+trailer
+<< /Size 5 /Root 1 0 R >>
+startxref
+395
+%%EOF`;
+                break;
+                
+            case 'excel':
+                // Simple CSV-like content for Excel
+                mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                fileContent = `Report,${reportName}
+Generated,${new Date().toLocaleDateString()}
+Period,${startDate} to ${endDate}
+Branch,{{ selected_branch.name|default:"All Branches" }}
+
+Date,Revenue,Orders
+${startDate},₹${Math.floor(Math.random() * 10000)},${Math.floor(Math.random() * 50)}
+${endDate},₹${Math.floor(Math.random() * 15000)},${Math.floor(Math.random() * 75)}`;
+                break;
+                
+            case 'csv':
+                mimeType = 'text/csv';
+                fileContent = `Report,${reportName}
+Generated,${new Date().toLocaleDateString()}
+Period,${startDate} to ${endDate}
+Branch,{{ selected_branch.name|default:"All Branches" }}
+
+Date,Revenue,Orders,Average Order Value
+${startDate},₹${Math.floor(Math.random() * 10000)},${Math.floor(Math.random() * 50)},₹${Math.floor(Math.random() * 200)}
+${endDate},₹${Math.floor(Math.random() * 15000)},${Math.floor(Math.random() * 75)},₹${Math.floor(Math.random() * 250)}`;
+                break;
+        }
+
+        // Create blob and download
+        const blob = new Blob([fileContent], { type: mimeType });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        // Hide loading indicator
+        loadingIndicator.style.display = 'none';
+        generateBtn.disabled = false;
+
+        // Add to download history
+        addToDownloadHistory({
+            name: reportName,
+            type: reportType,
+            format: format,
+            dateRange: dateRangeType,
+            fileName: fileName,
+            downloadedAt: new Date().toLocaleString()
+        });
+
+        // Show success message
+        showResult(
+            `✅ <strong>${reportName}</strong> downloaded successfully!<br>
+            <small>File: ${fileName} (${formatName})</small><br>
+            <small>Check your downloads folder</small>`,
+            'success'
+        );
+    }
+
+    function generateQuickReport(reportType, format) {
+        const today = new Date();
+        const startDate = today.toISOString().split('T')[0];
+        const endDate = today.toISOString().split('T')[0];
+        
+        generateReportFile(reportType, format, startDate, endDate, 'today');
+    }
+
+    function addToDownloadHistory(download) {
+        downloadHistory.unshift(download);
+        // Keep only last 10 downloads
+        if (downloadHistory.length > 10) {
+            downloadHistory = downloadHistory.slice(0, 10);
+        }
+        localStorage.setItem('reportDownloads', JSON.stringify(downloadHistory));
+        updateDownloadHistory();
+    }
+
+    function updateDownloadHistory() {
+        const historyContainer = document.getElementById('downloadHistory');
+        
+        if (downloadHistory.length === 0) {
+            historyContainer.innerHTML = '<p class="text-muted text-center">No recent downloads. Generate a report to see download history here.</p>';
+            return;
+        }
+
+        let html = '<div class="list-group list-group-flush">';
+        downloadHistory.forEach(download => {
+            html += `
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">${download.name}</h6>
+                        <small>${download.downloadedAt}</small>
+                    </div>
+                    <p class="mb-1">
+                        <span class="badge bg-primary">${download.type}</span>
+                        <span class="badge bg-secondary">${download.format.toUpperCase()}</span>
+                        <span class="badge bg-info">${download.dateRange}</span>
+                    </p>
+                    <small class="text-muted">File: ${download.fileName}</small>
+                </div>
+            `;
+        });
+        html += '</div>';
+        historyContainer.innerHTML = html;
+    }
+
+    function getReportDisplayName(type) {
+        const names = {
+            'sales': 'Sales Summary Report',
+            'inventory': 'Inventory Status Report',
+            'financial': 'Financial Overview Report',
+            'customer': 'Customer Analytics Report'
+        };
+        return names[type] || 'Report';
+    }
+
+    function getFormatDisplayName(format) {
+        const names = {
+            'pdf': 'PDF',
+            'excel': 'Excel',
+            'csv': 'CSV'
+        };
+        return names[format] || format.toUpperCase();
+    }
+
+    function showResult(message, type) {
+        resultMessage.innerHTML = message;
+        resultMessage.className = `alert alert-${type}`;
+        resultMessage.style.display = 'block';
+        
+        // Auto-hide success messages after 8 seconds
+        if (type === 'success') {
+            setTimeout(() => {
+                resultMessage.style.display = 'none';
+            }, 8000);
+        }
+    }
+});
+</script>
+{% endblock %}

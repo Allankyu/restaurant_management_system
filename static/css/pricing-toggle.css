@@ -1,0 +1,24 @@
+/* Style for the pricing configuration section */
+.field-pricing_type {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.field-pricing_type select {
+    font-weight: bold;
+    border: 2px solid #dee2e6;
+}
+
+.field-price, .field-food_source {
+    transition: all 0.3s ease;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.field-price:not([style*="display: none"]),
+.field-food_source:not([style*="display: none"]) {
+    background: #e8f5e8;
+    border-left: 4px solid #28a745;
+}

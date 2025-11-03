@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Online Order - Delivery{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="text-center mb-5">
+                <h1 class="display-4 text-primary">Online Order</h1>
+                <p class="lead">Order your favorite meals for delivery</p>
+            </div>
+
+            <form method="post" id="onlineOrderForm" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <!-- Customer Information -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user me-2"></i>Your Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- ... customer form fields same as before ... -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="customer_name" class="form-label">Full Name *</label>
+                                    <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                                    <div class="invalid-feedback">Please provide your full name.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="customer_phone" class="form-label">Phone Number *</label>
+                                    <input type="tel" class="form-control" id="customer_phone" name="customer_phone" required>
+                                    <div class="invalid-feedback">Please provide a valid phone number.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="customer_email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="customer_email" name="customer_email">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="delivery_address" class="form-label">Delivery Address *</label>
+                                    <textarea class="form-control" id="delivery_address" name="delivery_address" rows="2" required placeholder="Full delivery address including street, area, and any landmarks"></textarea>
+                                    <div class="invalid-feedback">Please provide your delivery address.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Menu Items Section -->
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-utensils me-2"></i>Menu Items
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Custom Combos Section -->
+                        {% if base_items and protein_sources %}
+                        <div class="mb-4 border-bottom pb-3">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-utensils me-2"></i>Create Your Own Meal
+                            </h6>
+                            <div class="row g-2 mb-3" id="customComboSection">
+                                <div class="col-md-4">
+                                    <label class="form-label">Base Food(s)</label>
+                                    <select class="form-select custom-base-select" id="customBaseSelect" multiple size="4">
+                                        <option value="">Choose base food(s)...</option>
+                                        <!-- Free Base Foods -->
+                                        <optgroup label="🎁 Free Base Foods">
+                                            {% for base in base_items %}
+                                                {% if base.actual_price == 0 or not base.actual_price %}
+                                                <option value="{{ base.id }}" data-price="0" data-type="free">
+                                                    {{ base.name }}
+                                                </option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </optgroup>
+                                        <!-- Priced Base Foods -->
+                                        <optgroup label="💰 Premium Base Foods (Extra Cost)">
+                                            {% for base in base_items %}
+                                                {% if base.actual_price and base.actual_price > 0 %}
+                                                <option value="{{ base.id }}" data-price="{{ base.actual_price }}" data-type="priced">
+                                                    {{ base.name }} (+Ksh {{ base.actual_price }})
+                                                </option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </optgroup>
+                                    </select>
+                                    <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Protein Source</label>
+                                    <select class="form-select custom-source-select" id="customSourceSelect">
+                                        <option value="">Choose protein source...</option>
+                                        {% for source in protein_sources %}
+                                        <option value="{{ source.id }}" data-price="{{ source.actual_price }}">
+                                            {{ source.name }} - Ksh {{ source.actual_price }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Protein Only</label>
+                                    <button type="button" class="btn btn-warning w-100" id="addProteinOnly">
+                                        <i class="fas fa-drumstick-bite"></i> Protein Only
+                                    </button>
+                                    <small class="text-muted">Add protein without base</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Qty</label>
+                                    <input type="number" class="form-control custom-quantity" id="customQuantity" value="1" min="1">
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary" id="addCustomCombo">
+                                        <i class="fas fa-plus"></i> Add Custom Combo
+                                    </button>
+                                    <small class="text-muted ms-2">Create your perfect meal combination</small>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div id="customComboPreview" class="alert alert-info" style="display: none;">
+                                        <strong>Custom Combo:</strong> 
+                                        <span id="comboPreviewText"></span> - 
+                                        <span id="comboPreviewPrice" class="fw-bold"></span>
+                                    </div>
+                                    <div id="proteinOnlyPreview" class="alert alert-warning" style="display: none;">
+                                        <strong>Protein Only:</strong> 
+                                        <span id="proteinPreviewText"></span> - 
+                                        <span id="proteinPreviewPrice" class="fw-bold"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Pre-defined Combos -->
+                        {% if combo_items %}
+                        <div class="mb-4">
+                            <h6 class="text-success mb-3">
+                                <i class="fas fa-star me-2"></i>Popular Meals
+                            </h6>
+                            <div class="row" id="comboItemsContainer">
+                                {% for item in combo_items %}
+                                <div class="col-md-4 mb-3 menu-item">
+                                    <div class="card h-100 shadow-sm">
+                                        {% if item.image %}
+                                        <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}" style="height: 150px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                                            <i class="fas fa-utensils fa-3x text-muted"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div class="card-body">
+                                            <h6 class="card-title">{{ item.display_name }}</h6>
+                                            <p class="card-text small text-muted">{{ item.description|default:"Delicious meal"|truncatewords:15 }}</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-bold text-primary">Ksh {{ item.actual_price }}</span>
+                                                <div class="input-group input-group-sm" style="width: 120px;">
+                                                    <button type="button" class="btn btn-outline-secondary minus-btn" data-item="{{ item.id }}">-</button>
+                                                    <input type="number" class="form-control text-center quantity-input" 
+                                                           id="qty_{{ item.id }}" data-price="{{ item.actual_price }}" 
+                                                           data-item="{{ item.id }}" value="0" min="0" readonly>
+                                                    <button type="button" class="btn btn-outline-primary plus-btn" data-item="{{ item.id }}">+</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Beverages -->
+                        {% if beverage_items %}
+                        <div class="mb-4">
+                            <h6 class="text-info mb-3">
+                                <i class="fas fa-coffee me-2"></i>Beverages
+                            </h6>
+                            <div class="row">
+                                {% for item in beverage_items %}
+                                <div class="col-md-4 mb-3 menu-item">
+                                    <div class="card h-100 shadow-sm">
+                                        {% if item.image %}
+                                        <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}" style="height: 150px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                                            <i class="fas fa-glass-whiskey fa-3x text-muted"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div class="card-body">
+                                            <h6 class="card-title">{{ item.name }}</h6>
+                                            <p class="card-text small text-muted">{{ item.description|default:"Refreshing drink"|truncatewords:15 }}</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-bold text-primary">Ksh {{ item.actual_price }}</span>
+                                                <div class="input-group input-group-sm" style="width: 120px;">
+                                                    <button type="button" class="btn btn-outline-secondary minus-btn" data-item="{{ item.id }}">-</button>
+                                                    <input type="number" class="form-control text-center quantity-input" 
+                                                           id="qty_{{ item.id }}" data-price="{{ item.actual_price }}" 
+                                                           data-item="{{ item.id }}" value="0" min="0" readonly>
+                                                    <button type="button" class="btn btn-outline-primary plus-btn" data-item="{{ item.id }}">+</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Side Dishes -->
+                        {% if side_items %}
+                        <div class="mb-4">
+                            <h6 class="text-warning mb-3">
+                                <i class="fas fa-apple-alt me-2"></i>Side Dishes
+                            </h6>
+                            <div class="row">
+                                {% for item in side_items %}
+                                <div class="col-md-4 mb-3 menu-item">
+                                    <div class="card h-100 shadow-sm">
+                                        {% if item.image %}
+                                        <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}" style="height: 150px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                                            <i class="fas fa-carrot fa-3x text-muted"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div class="card-body">
+                                            <h6 class="card-title">{{ item.name }}</h6>
+                                            <p class="card-text small text-muted">{{ item.description|default:"Tasty side dish"|truncatewords:15 }}</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-bold text-primary">Ksh {{ item.actual_price }}</span>
+                                                <div class="input-group input-group-sm" style="width: 120px;">
+                                                    <button type="button" class="btn btn-outline-secondary minus-btn" data-item="{{ item.id }}">-</button>
+                                                    <input type="number" class="form-control text-center quantity-input" 
+                                                           id="qty_{{ item.id }}" data-price="{{ item.actual_price }}" 
+                                                           data-item="{{ item.id }}" value="0" min="0" readonly>
+                                                    <button type="button" class="btn btn-outline-primary plus-btn" data-item="{{ item.id }}">+</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if not combo_items and not beverage_items and not side_items and not base_items %}
+                        <div class="alert alert-warning text-center">
+                            <i class="fas fa-utensils fa-2x mb-3"></i>
+                            <h5>Menu Coming Soon!</h5>
+                            <p class="mb-0">Our menu is currently being updated. Please check back later or call us to place your order.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Order Summary & Special Instructions -->
+                <div class="row mt-4">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-edit me-2"></i>Special Instructions
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="order_notes" class="form-label">Any special requests or dietary requirements?</label>
+                                    <textarea class="form-control" id="order_notes" name="order_notes" rows="3" placeholder="e.g., No spices, extra sauce, allergies, etc."></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="preferred_delivery_time" class="form-label">Preferred Delivery Time</label>
+                                    <select class="form-select" id="preferred_delivery_time" name="preferred_delivery_time">
+                                        <option value="asap">As soon as possible</option>
+                                        <option value="30_min">Within 30 minutes</option>
+                                        <option value="1_hour">Within 1 hour</option>
+                                        <option value="specific">Specific time (we'll call to confirm)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card sticky-top" style="top: 20px;">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-receipt me-2"></i>Order Summary
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="onlineOrderItemsList" class="mb-3" style="max-height: 200px; overflow-y: auto;">
+                                    <p class="text-muted text-center small">No items added yet</p>
+                                </div>
+                                <div class="border-top pt-2">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Subtotal:</span>
+                                        <span id="onlineSubtotal">Ksh 0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Delivery Fee:</span>
+                                        <span id="deliveryFee">Ksh 100.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between fw-bold fs-5">
+                                        <span>Total:</span>
+                                        <span id="onlineTotal">Ksh 100.00</span>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="total_amount" id="onlineTotalAmount" value="100">
+                                <input type="hidden" name="order_type" value="delivery">
+                                
+                                <!-- Hidden inputs for custom combos -->
+                                <div id="customComboInputs"></div>
+                                
+                                <div class="d-grid mt-3">
+                                    <button type="submit" class="btn btn-success btn-lg" id="submitOnlineOrderBtn" disabled>
+                                        <i class="fas fa-paper-plane me-2"></i> Place Order
+                                    </button>
+                                </div>
+                                <p class="text-muted small mt-2 text-center">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    We'll call you to confirm your order
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/online_order.js' %}"></script>
+{% endblock %}

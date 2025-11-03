@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ branch.name }} - Admin Access{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>
+            <i class="fas fa-user-shield text-danger"></i> {{ branch.name }}
+        </h1>
+        <p class="text-muted mb-0">Admin Access - Managing branch as administrator</p>
+        <small class="text-muted">Full access to all branch operations</small>
+    </div>
+    <div>
+        <a href="{% url 'core:branch_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to All Branches
+        </a>
+    </div>
+</div>
+
+<!-- Admin Warning -->
+<div class="alert alert-warning mb-4">
+    <i class="fas fa-user-shield"></i> 
+    <strong>Admin Mode:</strong> You are managing <strong>{{ branch.name }}</strong> as administrator. 
+    You have full access to all branch operations.
+</div>
+
+<!-- Branch Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3>{{ today_orders_count }}</h3>
+                <small>Today's Orders</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3>₹{{ today_revenue }}</h3>
+                <small>Today's Revenue</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3>{{ today_reservations }}</h3>
+                <small>Today's Reservations</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h3>{{ active_employees }}</h3>
+                <small>Active Employees</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Action Cards for Admin -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h6 class="mb-0"><i class="fas fa-shopping-cart"></i> Orders</h6>
+            </div>
+            <div class="card-body">
+                <p>Manage orders for {{ branch.name }}</p>
+                <a href="{% url 'orders:order_list' %}?branch={{ branch.id }}" class="btn btn-outline-primary btn-sm">
+                    View All Orders
+                </a>
+                <a href="{% url 'orders:order_create' %}?branch={{ branch.id }}" class="btn btn-success btn-sm">
+                    Create New Order
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h6 class="mb-0"><i class="fas fa-users"></i> Employees</h6>
+            </div>
+            <div class="card-body">
+                <p>Manage staff for {{ branch.name }}</p>
+                <a href="{% url 'core:employee_list' %}?branch={{ branch.id }}" class="btn btn-outline-primary btn-sm">
+                    View Employees
+                </a>
+                <a href="{% url 'core:employee_add' %}?branch={{ branch.id }}" class="btn btn-success btn-sm">
+                    Add Employee
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h6 class="mb-0"><i class="fas fa-calendar"></i> Reservations</h6>
+            </div>
+            <div class="card-body">
+                <p>Manage reservations for {{ branch.name }}</p>
+                <a href="{% url 'reservations:reservation_list' %}?branch={{ branch.id }}" class="btn btn-outline-primary btn-sm">
+                    View Reservations
+                </a>
+                <a href="{% url 'reservations:reservation_create' %}?branch={{ branch.id }}" class="btn btn-success btn-sm">
+                    New Reservation
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity (similar to manager dashboard) -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Orders</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_orders %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td>{{ order.order_number }}</td>
+                                <td>{{ order.customer.name }}</td>
+                                <td>₹{{ order.total_amount }}</td>
+                                <td>
+                                    <span class="badge bg-{% if order.status == 'pending' %}warning{% elif order.status == 'confirmed' %}info{% elif order.status == 'served' %}success{% else %}secondary{% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No recent orders</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Upcoming Reservations</h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_reservations %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Customer</th>
+                                <th>Guests</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reservation in upcoming_reservations %}
+                            <tr>
+                                <td>{{ reservation.reservation_date|date:"M d" }}</td>
+                                <td>{{ reservation.reservation_time|time:"g:i A" }}</td>
+                                <td>{{ reservation.customer.name }}</td>
+                                <td>{{ reservation.guests }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No upcoming reservations</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

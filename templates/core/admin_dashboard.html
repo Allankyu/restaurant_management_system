@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Admin Dashboard</h1>
+    <div>
+        <span class="badge bg-danger me-2">
+            <i class="fas fa-user-shield"></i> Admin Mode
+        </span>
+        <small class="text-muted">Full System Access</small>
+    </div>
+</div>
+
+<!-- Admin Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3>{{ total_branches }}</h3>
+                <small>Total Branches</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3>{{ total_employees }}</h3>
+                <small>Total Employees</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3>{{ total_orders_today }}</h3>
+                <small>Today's Orders</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h3>₹{{ total_revenue_today }}</h3>
+                <small>Today's Revenue</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Quick Actions -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-cogs"></i> System Management</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'core:branch_list' %}" class="btn btn-outline-primary btn-lg text-start">
+                        <i class="fas fa-store me-2"></i> Manage All Branches
+                    </a>
+                    <a href="{% url 'core:employee_list' %}" class="btn btn-outline-success btn-lg text-start">
+                        <i class="fas fa-users me-2"></i> Manage All Employees
+                    </a>
+                    <a href="/admin/" class="btn btn-outline-danger btn-lg text-start" target="_blank">
+                        <i class="fas fa-user-shield me-2"></i> Django Admin Panel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Reports & Analytics</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'reports:reports_dashboard' %}" class="btn btn-outline-info btn-lg text-start">
+                        <i class="fas fa-chart-bar me-2"></i> System Reports Overview
+                    </a>
+                    <a href="{% url 'reports:reports_dashboard' %}?branch=all" class="btn btn-outline-warning btn-lg text-start">
+                        <i class="fas fa-building me-2"></i> All Branches Combined
+                    </a>
+                    <a href="{% url 'orders:order_list' %}" class="btn btn-outline-primary btn-lg text-start">
+                        <i class="fas fa-shopping-cart me-2"></i> All Orders System Wide
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reservations & Inventory Access -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> Reservations Management</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'reservations:reservation_dashboard' %}" class="btn btn-outline-success btn-lg text-start">
+                        <i class="fas fa-calendar me-2"></i> All Reservations
+                    </a>
+                    <a href="{% url 'reservations:reservation_list' %}" class="btn btn-outline-info btn-lg text-start">
+                        <i class="fas fa-list me-2"></i> Manage Reservations
+                    </a>
+                    <a href="{% url 'reservations:reservation_create' %}" class="btn btn-outline-primary btn-lg text-start">
+                        <i class="fas fa-plus me-2"></i> Create Reservation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="fas fa-boxes"></i> Inventory Management</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'inventory:inventory_dashboard' %}" class="btn btn-outline-warning btn-lg text-start">
+                        <i class="fas fa-warehouse me-2"></i> Inventory Overview
+                    </a>
+                    <a href="{% url 'inventory:stock_list' %}" class="btn btn-outline-info btn-lg text-start">
+                        <i class="fas fa-box me-2"></i> Manage Stock
+                    </a>
+                    <a href="{% url 'inventory:menu_list' %}" class="btn btn-outline-primary btn-lg text-start">
+                        <i class="fas fa-utensils me-2"></i> Menu Items
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Reports Access -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Quick Branch Reports Access</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Access detailed reports for each branch:</p>
+                <div class="row">
+                    {% for branch in branches %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-store text-primary me-2"></i>{{ branch.name }}
+                                </h6>
+                                <p class="card-text small text-muted mb-2">
+                                    <i class="fas fa-users"></i> {{ branch.employee_set.count }} employees<br>
+                                    <i class="fas fa-shopping-cart"></i> {{ branch.order_set.count }} orders<br>
+                                    <i class="fas fa-calendar"></i> {{ branch.reservation_set.count }} reservations
+                                </p>
+                                <div class="btn-group w-100">
+                                    <a href="{% url 'reports:reports_dashboard' %}?branch={{ branch.id }}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-chart-bar"></i> Reports
+                                    </a>
+                                    <a href="{% url 'orders:order_list' %}?branch={{ branch.id }}" 
+                                       class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-list"></i> Orders
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-warning text-center">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            No branches found. 
+                            <a href="{% url 'core:branch_add' %}" class="alert-link">Add your first branch</a>.
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Branch-Specific Reservations & Inventory -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-store"></i> Branch-Specific Management</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Access reservations and inventory for each branch:</p>
+                <div class="row">
+                    {% for branch in branches %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-store text-primary me-2"></i>{{ branch.name }}
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <!-- Branch Statistics -->
+                                <div class="row text-center mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted">Reservations</small>
+                                        <h6 class="text-success">{{ branch.reservation_set.count }}</h6>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Low Stock</small>
+                                        <h6 class="text-warning">
+                                            {% with low_stock_count=branch.get_low_stock_count %}
+                                                {{ low_stock_count|default:"0" }}
+                                            {% endwith %}
+                                        </h6>
+                                    </div>
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="btn-group-vertical w-100">
+                                    <a href="{% url 'reservations:reservation_list' %}?branch={{ branch.id }}" 
+                                       class="btn btn-outline-success btn-sm mb-2">
+                                        <i class="fas fa-calendar me-1"></i> Reservations
+                                    </a>
+                                    <a href="{% url 'inventory:inventory_dashboard' %}?branch={{ branch.id }}" 
+                                       class="btn btn-outline-warning btn-sm mb-2">
+                                        <i class="fas fa-boxes me-1"></i> Inventory
+                                    </a>
+                                    <a href="{% url 'orders:order_list' %}?branch={{ branch.id }}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-shopping-cart me-1"></i> Orders
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-warning text-center">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            No branches found.
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Report Types -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-money-bill-wave fa-2x text-success mb-2"></i>
+                <h6>Sales Reports</h6>
+                <a href="{% url 'reports:sales_report' %}" class="btn btn-outline-success btn-sm mt-2">
+                    View Sales
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-boxes fa-2x text-warning mb-2"></i>
+                <h6>Inventory Reports</h6>
+                <a href="{% url 'reports:inventory_report' %}" class="btn btn-outline-warning btn-sm mt-2">
+                    View Inventory
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
+                <h6>Financial Reports</h6>
+                <a href="{% url 'reports:financial_report' %}" class="btn btn-outline-info btn-sm mt-2">
+                    View Financial
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                <h6>Staff Reports</h6>
+                <a href="{% url 'core:employee_list' %}" class="btn btn-outline-primary btn-sm mt-2">
+                    View Staff
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Overview -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> System Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Quick Links</h6>
+                        <ul class="list-unstyled">
+                            <li><a href="{% url 'core:branch_list' %}">• View All Branches</a></li>
+                            <li><a href="{% url 'core:employee_list' %}">• Manage All Staff</a></li>
+                            <li><a href="{% url 'reports:reports_dashboard' %}">• System Reports</a></li>
+                            <li><a href="{% url 'reservations:reservation_dashboard' %}">• All Reservations</a></li>
+                            <li><a href="{% url 'inventory:inventory_dashboard' %}">• Inventory Overview</a></li>
+                            <li><a href="/admin/">• Database Administration</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Statistics</h6>
+                        <ul class="list-unstyled">
+                            <li>• Total Branches: <strong>{{ total_branches }}</strong></li>
+                            <li>• Total Employees: <strong>{{ total_employees }}</strong></li>
+                            <li>• Today's Orders: <strong>{{ total_orders_today }}</strong></li>
+                            <li>• Today's Revenue: <strong>₹{{ total_revenue_today }}</strong></li>
+                            <li>• Total Reservations: <strong>{{ total_reservations|default:"0" }}</strong></li>
+                            <li>• Low Stock Items: <strong>{{ total_low_stock|default:"0" }}</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-clock"></i> Recent System Activity</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    System activity monitoring will be implemented here. 
+                    This section can show recent orders, employee activities, and system events.
+                </div>
+                <!-- You can add recent logs, notifications, etc. -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,488 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Edit Order {{ order.order_number }}{% else %}Create Order{% endif %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{% if is_edit %}Edit Order {{ order.order_number }}{% else %}Create New Order{% endif %}</h1>
+    <a href="{% if is_edit %}{% url 'orders:order_detail' order.pk %}{% else %}{% url 'orders:order_list' %}{% endif %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to {% if is_edit %}Order{% else %}Orders{% endif %}
+    </a>
+</div>
+
+<form method="post" id="orderForm" data-is-admin-without-branch="{% if not user_branch and user.is_superuser %}true{% else %}false{% endif %}">
+    {% csrf_token %}
+    {% if is_edit %}
+    <input type="hidden" name="is_edit" value="true">
+    {% endif %}
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <!-- Left Column - Order Information -->
+        <div class="col-md-8">
+            <!-- Customer & Order Type Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Order Information</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Branch Selection for Admin Users -->
+                    {% if not user_branch and user.is_superuser %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="branch" class="form-label">Select Branch *</label>
+                                <select class="form-select" id="branch" name="branch" required>
+                                    <option value="">Choose Branch...</option>
+                                    {% for branch in branches %}
+                                    <option value="{{ branch.id }}" 
+                                        {% if is_edit and order.branch.id == branch.id %}selected{% endif %}>
+                                        {{ branch.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Current User</label>
+                                <div class="form-control bg-light">
+                                    <small class="text-muted">Admin User - Can assign to any branch</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% elif user_branch %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Assigned Branch</label>
+                                <div class="form-control bg-light">
+                                    <strong>{{ user_branch.name }}</strong>
+                                    <input type="hidden" name="branch" value="{{ user_branch.id }}">
+                                </div>
+                                <small class="text-muted">Orders will be automatically assigned to your branch</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Current User</label>
+                                <div class="form-control bg-light">
+                                    <small>{{ user.get_full_name }} - {{ user.employee.get_employee_type_display }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customer" class="form-label">Select Customer *</label>
+                                <select class="form-select" id="customer" name="customer" required>
+                                    <option value="">Choose Customer...</option>
+                                    {% for customer in customers %}
+                                    <option value="{{ customer.id }}" 
+                                        {% if is_edit and order.customer.id == customer.id %}selected{% endif %}>
+                                        {{ customer.name }} - {{ customer.phone }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newCustomerModal">
+                                    <i class="fas fa-user-plus"></i> Add New Customer
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="order_type" class="form-label">Order Type *</label>
+                                <select class="form-select" id="order_type" name="order_type" required>
+                                    <option value="dine_in" {% if is_edit and order.order_type == 'dine_in' %}selected{% endif %}>Dine In</option>
+                                    <option value="takeaway" {% if is_edit and order.order_type == 'takeaway' %}selected{% endif %}>Takeaway</option>
+                                    <option value="delivery" {% if is_edit and order.order_type == 'delivery' %}selected{% endif %}>Delivery</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" id="dineInSection">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="table_number" class="form-label">Select Table</label>
+                                <select class="form-select" id="table_number" name="table_number">
+                                    <option value="">Choose Table...</option>
+                                    {% for table in tables %}
+                                    <option value="{{ table.table_number }}"
+                                        {% if is_edit and order.table_number == table.table_number %}selected{% endif %}>
+                                        Table {{ table.table_number }} ({{ table.capacity }} people)
+                                        {% if table.branch %} - {{ table.branch.name }}{% endif %}
+                                    </option>
+                                    {% empty %}
+                                    <option value="" disabled>No tables available</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="waiter" class="form-label">Assign Waiter</label>
+                                <select class="form-select" id="waiter" name="waiter">
+                                    <option value="">Choose Waiter...</option>
+                                    {% for waiter in waiters %}
+                                    <option value="{{ waiter.id }}"
+                                        {% if is_edit and order.waiter.id == waiter.id %}selected{% endif %}>
+                                        {{ waiter.user.get_full_name }}
+                                    </option>
+                                    {% empty %}
+                                    <option value="" disabled>No waiters available</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Order Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Any special instructions or dietary requirements...">{% if is_edit %}{{ order.notes }}{% endif %}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu Items Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Menu Items</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Custom Combos Section -->
+                    <div class="mb-4 border-bottom pb-3">
+                        <h6 class="text-primary">
+                            <i class="fas fa-utensils me-2"></i>Create Custom Meal
+                        </h6>
+                        <div class="row g-2 mb-3" id="customComboSection">
+                            <div class="col-md-4">
+                                <label class="form-label">Base Food(s)</label>
+                                <select class="form-select custom-base-select" id="customBaseSelect" multiple size="6">
+                                    <option value="">Choose base food(s)...</option>
+                                    
+                                    <!-- Free Base Foods (No Price) -->
+                                    <optgroup label="🎁 Free Base Foods (Choose One or More)">
+                                        {% for base in base_items %}
+                                            {% if base.actual_price == 0 or not base.actual_price %}
+                                            <option value="{{ base.id }}" data-price="0" data-type="free">
+                                                {{ base.name }}
+                                            </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </optgroup>
+                                    
+                                    <!-- Priced Base Foods (Extra Charge) -->
+                                    <optgroup label="💰 Premium Base Foods (Extra Cost)">
+                                        {% for base in base_items %}
+                                            {% if base.actual_price and base.actual_price > 0 %}
+                                            <option value="{{ base.id }}" data-price="{{ base.actual_price }}" data-type="priced">
+                                                {{ base.name }} (+Ksh {{ base.actual_price }})
+                                            </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </optgroup>
+                                </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple base foods</small>
+                                <div class="mt-1">
+                                    <small class="text-success">✓ Free base foods included in combo price</small><br>
+                                    <small class="text-warning">✓ Premium base foods have extra cost</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Protein Source</label>
+                                <select class="form-select custom-source-select" id="customSourceSelect">
+                                    <option value="">Choose protein source...</option>
+                                    {% for source in protein_sources %}
+                                    <option value="{{ source.id }}" data-price="{{ source.actual_price }}">
+                                        {{ source.name }} - Ksh {{ source.actual_price }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Select one protein source</small>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Protein Only</label>
+                                <button type="button" class="btn btn-warning w-100" id="addProteinOnly">
+                                    <i class="fas fa-drumstick-bite"></i> Add Protein Only
+                                </button>
+                                <small class="text-muted">Add protein without base food</small>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Qty</label>
+                                <input type="number" class="form-control custom-quantity" id="customQuantity" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-12">
+                                <button type="button" class="btn btn-primary" id="addCustomCombo">
+                                    <i class="fas fa-plus"></i> Add Custom Combo
+                                </button>
+                                <small class="text-muted ms-2">Will create combo with protein, or base-only if no protein selected</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div id="customComboPreview" class="alert alert-info" style="display: none;">
+                                    <strong>Custom Combo:</strong> 
+                                    <span id="comboPreviewText"></span> - 
+                                    <span id="comboPreviewPrice" class="fw-bold"></span>
+                                </div>
+                                <div id="proteinOnlyPreview" class="alert alert-warning" style="display: none;">
+                                    <strong>Protein Only:</strong> 
+                                    <span id="proteinPreviewText"></span> - 
+                                    <span id="proteinPreviewPrice" class="fw-bold"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pre-defined Combos -->
+                    {% if combo_items %}
+                    <div class="mb-4">
+                        <h6 class="text-success">
+                            <i class="fas fa-star me-2"></i>Pre-defined Meals
+                        </h6>
+                        <div class="row" id="comboItemsContainer">
+                            {% for item in combo_items %}
+                            <div class="col-md-4 mb-3 menu-item">
+                                <div class="card h-100">
+                                    {% if item.image %}
+                                    <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}" style="height: 120px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 120px;">
+                                        <i class="fas fa-utensils fa-2x text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ item.display_name }}</h6>
+                                        <p class="card-text small text-muted">{{ item.description|truncatewords:10 }}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold text-primary">Ksh {{ item.actual_price }}</span>
+                                            <div class="input-group input-group-sm" style="width: 120px;">
+                                                <button type="button" class="btn btn-outline-secondary minus-btn" data-item="{{ item.id }}">-</button>
+                                                <input type="number" class="form-control text-center quantity-input" 
+                                                       id="qty_{{ item.id }}" data-price="{{ item.actual_price }}" 
+                                                       data-item="{{ item.id }}" value="0" min="0" readonly>
+                                                <button type="button" class="btn btn-outline-primary plus-btn" data-item="{{ item.id }}">+</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Beverages -->
+                    {% if beverage_items %}
+                    <div class="mb-4">
+                        <h6 class="text-info">
+                            <i class="fas fa-coffee me-2"></i>Beverages
+                        </h6>
+                        <div class="row">
+                            {% for item in beverage_items %}
+                            <div class="col-md-4 mb-3 menu-item">
+                                <div class="card h-100">
+                                    {% if item.image %}
+                                    <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}" style="height: 120px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 120px;">
+                                        <i class="fas fa-glass-whiskey fa-2x text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ item.name }}</h6>
+                                        <p class="card-text small text-muted">{{ item.description|truncatewords:10 }}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold text-primary">Ksh {{ item.actual_price }}</span>
+                                            <div class="input-group input-group-sm" style="width: 120px;">
+                                                <button type="button" class="btn btn-outline-secondary minus-btn" data-item="{{ item.id }}">-</button>
+                                                <input type="number" class="form-control text-center quantity-input" 
+                                                       id="qty_{{ item.id }}" data-price="{{ item.actual_price }}" 
+                                                       data-item="{{ item.id }}" value="0" min="0" readonly>
+                                                <button type="button" class="btn btn-outline-primary plus-btn" data-item="{{ item.id }}">+</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Side Dishes -->
+                    {% if side_items %}
+                    <div class="mb-4">
+                        <h6 class="text-warning">
+                            <i class="fas fa-apple-alt me-2"></i>Side Dishes
+                        </h6>
+                        <div class="row">
+                            {% for item in side_items %}
+                            <div class="col-md-4 mb-3 menu-item">
+                                <div class="card h-100">
+                                    {% if item.image %}
+                                    <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}" style="height: 120px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 120px;">
+                                        <i class="fas fa-carrot fa-2x text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ item.name }}</h6>
+                                        <p class="card-text small text-muted">{{ item.description|truncatewords:10 }}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold text-primary">Ksh {{ item.actual_price }}</span>
+                                            <div class="input-group input-group-sm" style="width: 120px;">
+                                                <button type="button" class="btn btn-outline-secondary minus-btn" data-item="{{ item.id }}">-</button>
+                                                <input type="number" class="form-control text-center quantity-input" 
+                                                       id="qty_{{ item.id }}" data-price="{{ item.actual_price }}" 
+                                                       data-item="{{ item.id }}" value="0" min="0" readonly>
+                                                <button type="button" class="btn btn-outline-primary plus-btn" data-item="{{ item.id }}">+</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Order Summary & Actions -->
+        <div class="col-md-4">
+            <!-- Order Summary -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div id="orderItemsList" class="mb-3" style="max-height: 300px; overflow-y: auto;">
+                        <p class="text-muted text-center">No items added to order</p>
+                    </div>
+                    <div class="border-top pt-2">
+                        <div class="d-flex justify-content-between">
+                            <strong>Total Amount:</strong>
+                            <strong id="orderTotal">Ksh 0.00</strong>
+                        </div>
+                    </div>
+                    <input type="hidden" name="total_amount" id="totalAmountInput" value="0">
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'admin:core_customer_add' %}" class="btn btn-outline-primary" target="_blank">
+                            <i class="fas fa-user-plus"></i> New Customer
+                        </a>
+                        <a href="{% url 'inventory:menu_list' %}" class="btn btn-outline-success">
+                            <i class="fas fa-utensils"></i> Manage Menu
+                        </a>
+                        <a href="{% url 'reservations:table_list' %}" class="btn btn-outline-info">
+                            <i class="fas fa-chair"></i> Table Status
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Customers -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Customers</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for customer in recent_customers %}
+                        <button type="button" class="list-group-item list-group-item-action customer-quick-select" 
+                                data-customer-id="{{ customer.id }}" data-customer-name="{{ customer.name }}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ customer.name }}</h6>
+                                <small>{{ customer.orders.count }} orders</small>
+                            </div>
+                            <p class="mb-1 small text-muted">{{ customer.phone }}</p>
+                        </button>
+                        {% empty %}
+                        <p class="text-muted text-center small">No recent customers</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-success btn-lg" id="placeOrderBtn">
+                    <i class="fas fa-check"></i> {% if is_edit %}Update Order{% else %}Place Order{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden inputs for custom combos -->
+    <div id="customComboInputs"></div>
+</form>
+
+<!-- New Customer Modal -->
+<div class="modal fade" id="newCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Customer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newCustomerForm">
+                    <div class="mb-3">
+                        <label for="new_customer_name" class="form-label">Name *</label>
+                        <input type="text" class="form-control" id="new_customer_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_customer_phone" class="form-label">Phone *</label>
+                        <input type="tel" class="form-control" id="new_customer_phone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_customer_email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="new_customer_email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_customer_address" class="form-label">Address</label>
+                        <textarea class="form-control" id="new_customer_address" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveCustomerBtn">Save Customer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/order_create.js' %}"></script>
+{% endblock %}

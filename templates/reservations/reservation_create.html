@@ -1,0 +1,422 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create New Reservation{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Create New Reservation</h1>
+    <a href="{% url 'reservations:reservation_dashboard' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Reservations
+    </a>
+</div>
+
+<form method="post" id="reservationForm">
+    {% csrf_token %}
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <!-- Left Column - Reservation Details -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Reservation Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customer" class="form-label">Customer *</label>
+                                <select class="form-select" id="customer" name="customer" required>
+                                    <option value="">Select Customer...</option>
+                                    {% for customer in customers %}
+                                    <option value="{{ customer.id }}">{{ customer.name }} - {{ customer.phone }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newCustomerModal">
+                                    <i class="fas fa-user-plus"></i> Add New Customer
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="number_of_guests" class="form-label">Number of Guests *</label>
+                                <input type="number" class="form-control" id="number_of_guests" name="number_of_guests" 
+                                       min="1" max="20" value="2" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="reservation_date" class="form-label">Date *</label>
+                                <input type="date" class="form-control" id="reservation_date" name="reservation_date" 
+                                       min="{% now 'Y-m-d' %}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="reservation_time" class="form-label">Time *</label>
+                                <input type="time" class="form-control" id="reservation_time" name="reservation_time" 
+                                       value="19:00" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="duration" class="form-label">Duration (minutes) *</label>
+                                <select class="form-select" id="duration" name="duration" required>
+                                    <option value="60">1 hour</option>
+                                    <option value="90">1.5 hours</option>
+                                    <option value="120" selected>2 hours</option>
+                                    <option value="150">2.5 hours</option>
+                                    <option value="180">3 hours</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="special_requests" class="form-label">Special Requests</label>
+                        <textarea class="form-control" id="special_requests" name="special_requests" 
+                                  rows="3" placeholder="Any special requirements or preferences..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Table Selection -->
+        <div class="col-md-4">
+            <!-- Available Tables -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Available Tables</h5>
+                </div>
+                <div class="card-body">
+                    <div id="tablesContainer">
+                        {% for table in tables %}
+                        <div class="card mb-3 table-card" data-capacity="{{ table.capacity }}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-title mb-1">Table {{ table.table_number }}</h6>
+                                        <p class="card-text small text-muted mb-1">{{ table.get_table_type_display }}</p>
+                                        <p class="card-text small mb-2">Capacity: {{ table.capacity }}</p>
+                                        {% if table.location_description %}
+                                        <p class="card-text small text-muted mb-1">{{ table.location_description }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <span class="badge bg-success">Available</span>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input table-radio" type="radio" 
+                                           name="table" id="table_{{ table.id }}" value="{{ table.id }}"
+                                           data-capacity="{{ table.capacity }}">
+                                    <label class="form-check-label small" for="table_{{ table.id }}">
+                                        Select this table
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center">No tables available</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary" id="checkAvailabilityBtn">
+                            <i class="fas fa-sync-alt"></i> Check Availability
+                        </button>
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-check"></i> Create Reservation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Customers -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Customers</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for customer in recent_customers %}
+                        <button type="button" class="list-group-item list-group-item-action customer-quick-select" 
+                                data-customer-id="{{ customer.id }}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ customer.name }}</h6>
+                            </div>
+                            <p class="mb-1 small text-muted">{{ customer.phone }}</p>
+                        </button>
+                        {% empty %}
+                        <p class="text-muted text-center small">No recent customers</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- New Customer Modal -->
+<div class="modal fade" id="newCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Customer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newCustomerForm">
+                    <div class="mb-3">
+                        <label for="new_customer_name" class="form-label">Name *</label>
+                        <input type="text" class="form-control" id="new_customer_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_customer_phone" class="form-label">Phone *</label>
+                        <input type="tel" class="form-control" id="new_customer_phone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_customer_email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="new_customer_email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_customer_address" class="form-label">Address</label>
+                        <textarea class="form-control" id="new_customer_address" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveCustomerBtn">Save Customer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('reservation_date').value = today;
+
+    // Quick customer selection
+    document.querySelectorAll('.customer-quick-select').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const customerId = this.dataset.customerId;
+            document.getElementById('customer').value = customerId;
+        });
+    });
+
+    // Filter tables by capacity
+    document.getElementById('number_of_guests').addEventListener('change', function() {
+        const guests = parseInt(this.value);
+        document.querySelectorAll('.table-card').forEach(card => {
+            const capacity = parseInt(card.dataset.capacity);
+            if (capacity >= guests) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+
+    // Check availability
+    document.getElementById('checkAvailabilityBtn').addEventListener('click', function() {
+        const date = document.getElementById('reservation_date').value;
+        const time = document.getElementById('reservation_time').value;
+        const guests = document.getElementById('number_of_guests').value;
+
+        if (!date || !time) {
+            alert('Please select both date and time');
+            return;
+        }
+
+        // Show loading
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+
+        fetch(`{% url 'reservations:check_table_availability' %}?date=${date}&time=${time}&guests=${guests}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const container = document.getElementById('tablesContainer');
+                    if (data.tables.length > 0) {
+                        let html = '';
+                        data.tables.forEach(table => {
+                            html += `
+                                <div class="card mb-3 table-card" data-capacity="${table.capacity}">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="card-title mb-1">Table ${table.table_number}</h6>
+                                                <p class="card-text small text-muted mb-1">${table.table_type}</p>
+                                                <p class="card-text small mb-2">Capacity: ${table.capacity}</p>
+                                            </div>
+                                            <span class="badge bg-success">Available</span>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input table-radio" type="radio" 
+                                                   name="table" id="table_${table.id}" value="${table.id}"
+                                                   data-capacity="${table.capacity}">
+                                            <label class="form-check-label small" for="table_${table.id}">
+                                                Select this table
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        container.innerHTML = html;
+                    } else {
+                        container.innerHTML = '<p class="text-muted text-center">No tables available for selected criteria</p>';
+                    }
+                } else {
+                    alert('Error checking availability: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error checking availability: ' + error);
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i> Check Availability';
+            });
+    });
+
+    // AJAX Customer Creation
+    document.getElementById('saveCustomerBtn').addEventListener('click', function() {
+        const name = document.getElementById('new_customer_name').value.trim();
+        const phone = document.getElementById('new_customer_phone').value.trim();
+        const email = document.getElementById('new_customer_email').value.trim();
+        const address = document.getElementById('new_customer_address').value.trim();
+        
+        if (!name || !phone) {
+            alert('Please fill in Name and Phone fields');
+            return;
+        }
+
+        const saveBtn = this;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+        fetch('{% url "reservations:create_customer_ajax" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                name: name,
+                phone: phone,
+                email: email,
+                address: address
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const option = document.createElement('option');
+                option.value = data.customer.id;
+                option.textContent = `${data.customer.name} - ${data.customer.phone}`;
+                document.getElementById('customer').appendChild(option);
+                document.getElementById('customer').value = data.customer.id;
+                
+                bootstrap.Modal.getInstance(document.getElementById('newCustomerModal')).hide();
+                document.getElementById('newCustomerForm').reset();
+                
+                alert('Customer created successfully!');
+            } else {
+                alert('Error creating customer: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error creating customer: ' + error);
+        })
+        .finally(() => {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = 'Save Customer';
+        });
+    });
+
+    // Form validation
+    document.getElementById('reservationForm').addEventListener('submit', function(e) {
+        const customer = document.getElementById('customer').value;
+        const table = document.querySelector('input[name="table"]:checked');
+        const date = document.getElementById('reservation_date').value;
+        const time = document.getElementById('reservation_time').value;
+        const guests = document.getElementById('number_of_guests').value;
+
+        if (!customer) {
+            e.preventDefault();
+            alert('Please select a customer');
+            return;
+        }
+
+        if (!table) {
+            e.preventDefault();
+            alert('Please select a table');
+            return;
+        }
+
+        if (!date || !time) {
+            e.preventDefault();
+            alert('Please select both date and time');
+            return;
+        }
+
+        if (parseInt(guests) > parseInt(table.dataset.capacity)) {
+            e.preventDefault();
+            alert('Number of guests exceeds selected table capacity');
+            return;
+        }
+    });
+});
+</script>
+
+<style>
+.table-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.table-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.customer-quick-select:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+.form-check-input:checked + .form-check-label {
+    font-weight: bold;
+}
+</style>
+{% endblock %}

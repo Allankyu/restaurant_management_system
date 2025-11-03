@@ -1,0 +1,229 @@
+<!-- templates/inventory/menu_item_form.html -->
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+
+{% block inventory_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-utensils me-2"></i>{{ title }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="form-section">
+                        <h5><i class="fas fa-info-circle me-2"></i>Basic Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label required-field">Name</label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                    <div class="text-danger small">{{ form.name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.category.id_for_label }}" class="form-label required-field">Category</label>
+                                    {{ form.category }}
+                                    {% if form.category.errors %}
+                                    <div class="text-danger small">{{ form.category.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="text-danger small">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.image.id_for_label }}" class="form-label">Image</label>
+                                    {{ form.image }}
+                                    {% if form.image.errors %}
+                                    <div class="text-danger small">{{ form.image.errors }}</div>
+                                    {% endif %}
+                                    
+                                    {% if menu_item and menu_item.image %}
+                                    <div class="image-preview mt-2">
+                                        <p class="small text-muted">Current Image:</p>
+                                        <img src="{{ menu_item.image.url }}" alt="{{ menu_item.name }}">
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="form-text">
+                                        Upload a high-quality image for this menu item. Recommended size: 500x500px.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.preparation_time.id_for_label }}" class="form-label">Preparation Time (minutes)</label>
+                                    {{ form.preparation_time }}
+                                    {% if form.preparation_time.errors %}
+                                    <div class="text-danger small">{{ form.preparation_time.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-check form-switch mb-3">
+                                    {{ form.is_available }}
+                                    <label class="form-check-label" for="{{ form.is_available.id_for_label }}">
+                                        Available for ordering
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h5><i class="fas fa-tag me-2"></i>Pricing & Type</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.item_type.id_for_label }}" class="form-label required-field">Item Type</label>
+                                    {{ form.item_type }}
+                                    {% if form.item_type.errors %}
+                                    <div class="text-danger small">{{ form.item_type.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text">{{ form.item_type.help_text|safe }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.pricing_type.id_for_label }}" class="form-label required-field">Pricing Type</label>
+                                    {{ form.pricing_type }}
+                                    {% if form.pricing_type.errors %}
+                                    <div class="text-danger small">{{ form.pricing_type.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text">{{ form.pricing_type.help_text|safe }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.price.id_for_label }}" class="form-label">Price (Ksh)</label>
+                                    {{ form.price }}
+                                    {% if form.price.errors %}
+                                    <div class="text-danger small">{{ form.price.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.cost_price.id_for_label }}" class="form-label required-field">Cost Price (Ksh)</label>
+                                    {{ form.cost_price }}
+                                    {% if form.cost_price.errors %}
+                                    <div class="text-danger small">{{ form.cost_price.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section" id="combo-configuration">
+                        <h5><i class="fas fa-layer-group me-2"></i>Combo Configuration</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.base_item.id_for_label }}" class="form-label">Base Item</label>
+                                    {{ form.base_item }}
+                                    {% if form.base_item.errors %}
+                                    <div class="text-danger small">{{ form.base_item.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.protein_source.id_for_label }}" class="form-label">Protein Source</label>
+                                    {{ form.protein_source }}
+                                    {% if form.protein_source.errors %}
+                                    <div class="text-danger small">{{ form.protein_source.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.compatible_sources.id_for_label }}" class="form-label">Compatible Protein Sources</label>
+                            {{ form.compatible_sources }}
+                            {% if form.compatible_sources.errors %}
+                            <div class="text-danger small">{{ form.compatible_sources.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">Select which protein sources can be combined with this base item (for base items only)</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'inventory:menu_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to List
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i>Save Menu Item
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show/hide combo configuration based on item type
+    const itemTypeSelect = document.getElementById('{{ form.item_type.id_for_label }}');
+    const comboSection = document.getElementById('combo-configuration');
+    
+    function toggleComboSection() {
+        if (itemTypeSelect.value === 'combo' || itemTypeSelect.value === 'base') {
+            comboSection.style.display = 'block';
+        } else {
+            comboSection.style.display = 'none';
+        }
+    }
+    
+    itemTypeSelect.addEventListener('change', toggleComboSection);
+    toggleComboSection(); // Initial call
+    
+    // Image preview
+    const imageInput = document.getElementById('{{ form.image.id_for_label }}');
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Create or update preview
+                    let preview = document.querySelector('.image-preview');
+                    if (!preview) {
+                        preview = document.createElement('div');
+                        preview.className = 'image-preview mt-2';
+                        imageInput.parentNode.appendChild(preview);
+                    }
+                    preview.innerHTML = `<p class="small text-muted">New Image Preview:</p><img src="${e.target.result}" alt="Preview">`;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

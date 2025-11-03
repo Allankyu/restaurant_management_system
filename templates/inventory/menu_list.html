@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Menu Items{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-utensils me-2"></i>Menu Items</h1>
+    <div>
+        <a href="{% url 'admin:inventory_menuitem_add' %}" class="btn btn-secondary me-2">
+            <i class="fas fa-plus"></i> Add via Admin
+        </a>
+        <a href="{% url 'inventory:menu_item_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> Add New Menu Item
+        </a>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <form method="get" class="row g-2">
+                    <div class="col-md-4">
+                        <select name="category" class="form-select">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"i" %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select name="available" class="form-select">
+                            <option value="">All Items</option>
+                            <option value="true" {% if request.GET.available == 'true' %}selected{% endif %}>Available</option>
+                            <option value="false" {% if request.GET.available == 'false' %}selected{% endif %}>Unavailable</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select name="item_type" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="combo" {% if request.GET.item_type == 'combo' %}selected{% endif %}>Complete Meal</option>
+                            <option value="base" {% if request.GET.item_type == 'base' %}selected{% endif %}>Base Food</option>
+                            <option value="source" {% if request.GET.item_type == 'source' %}selected{% endif %}>Protein Source</option>
+                            <option value="beverage" {% if request.GET.item_type == 'beverage' %}selected{% endif %}>Beverage</option>
+                            <option value="side" {% if request.GET.item_type == 'side' %}selected{% endif %}>Side Dish</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12 mt-2">
+                        <button class="btn btn-outline-primary me-2" type="submit">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                        <!-- FIXED: Changed menu_item_list to menu_list -->
+                        <a href="{% url 'inventory:menu_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-6 text-end">
+                <span class="text-muted">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    {{ menu_items.paginator.count }} total items
+                    {% if request.GET.category or request.GET.available or request.GET.item_type %}
+                    ({{ menu_items|length }} filtered)
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th width="80">Image</th>
+                        <th>Name & Description</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Price</th>
+                        <th>Cost</th>
+                        <th>Profit</th>
+                        <th>Status</th>
+                        <th>Prep Time</th>
+                        <th width="150">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in menu_items %}
+                    <tr>
+                        <td>
+                            {% if item.image %}
+                                <img src="{{ item.image.url }}" 
+                                     width="60" 
+                                     height="60" 
+                                     style="object-fit: cover; border-radius: 8px; border: 2px solid #dee2e6;"
+                                     alt="{{ item.name }}"
+                                     title="{{ item.name }}">
+                            {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center" 
+                                     style="width: 60px; height: 60px; border-radius: 8px; border: 2px dashed #dee2e6;">
+                                    {% if item.item_type == 'base' %}
+                                    <i class="fas fa-bread-slice text-muted"></i>
+                                    {% elif item.item_type == 'source' %}
+                                    <i class="fas fa-drumstick-bite text-muted"></i>
+                                    {% elif item.item_type == 'beverage' %}
+                                    <i class="fas fa-glass-whiskey text-muted"></i>
+                                    {% elif item.item_type == 'side' %}
+                                    <i class="fas fa-apple-alt text-muted"></i>
+                                    {% else %}
+                                    <i class="fas fa-utensils text-muted"></i>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="fw-bold text-primary">{{ item.name }}</div>
+                            <small class="text-muted">{{ item.description|truncatewords:10 }}</small>
+                            {% if item.is_customizable_component %}
+                            <br><small class="badge bg-info mt-1">Custom Combo Component</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ item.category.name }}</span>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if item.item_type == 'combo' %}bg-primary
+                                {% elif item.item_type == 'base' %}bg-warning text-dark
+                                {% elif item.item_type == 'source' %}bg-danger
+                                {% elif item.item_type == 'beverage' %}bg-info
+                                {% else %}bg-success{% endif %}">
+                                {{ item.get_item_type_display }}
+                            </span>
+                        </td>
+                        <td class="fw-bold text-success">Ksh {{ item.actual_price }}</td>
+                        <td class="text-muted">Ksh {{ item.cost_price }}</td>
+                        <td class="fw-bold {% if item.profit_margin > 0 %}text-success{% else %}text-danger{% endif %}">
+                            Ksh {{ item.profit_margin }}
+                        </td>
+                        <td>
+                            {% if item.is_available %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>Available
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times-circle me-1"></i>Unavailable
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-clock me-1"></i>{{ item.preparation_time }}min
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'inventory:menu_item_edit' item.pk %}" 
+                                   class="btn btn-outline-primary" 
+                                   title="Edit with Image Upload">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'admin:inventory_menuitem_change' item.pk %}" 
+                                   class="btn btn-outline-secondary" 
+                                   title="Edit in Admin">
+                                    <i class="fas fa-cog"></i>
+                                </a>
+                                <a href="{% url 'inventory:menu_item_delete' item.pk %}" 
+                                   class="btn btn-outline-danger" 
+                                   title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="fas fa-utensils fa-3x mb-3"></i>
+                                <h5>No menu items found</h5>
+                                <p class="mb-3">Get started by adding your first menu item</p>
+                                <a href="{% url 'inventory:menu_item_create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle me-2"></i>Add Your First Menu Item
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if menu_items.has_other_pages %}
+        <nav aria-label="Menu items pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if menu_items.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ menu_items.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in menu_items.paginator.page_range %}
+                    {% if menu_items.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > menu_items.number|add:'-3' and num < menu_items.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if menu_items.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ menu_items.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ total_items }}</h4>
+                        <p class="mb-0">Total Items</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-utensils fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ available_items }}</h4>
+                        <p class="mb-0">Available</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ combo_items }}</h4>
+                        <p class="mb-0">Complete Meals</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-layer-group fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ custom_items }}</h4>
+                        <p class="mb-0">Custom Components</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-puzzle-piece fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add hover effects for images
+    const images = document.querySelectorAll('img[alt]');
+    images.forEach(img => {
+        img.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.1)';
+            this.style.transition = 'transform 0.3s ease';
+        });
+        img.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}

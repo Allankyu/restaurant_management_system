@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order Confirmed{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-body text-center p-5">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    
+                    <h1 class="display-4 text-success mb-3">Order Confirmed!</h1>
+                    <p class="lead mb-4">Thank you for your order. We're preparing your food.</p>
+                    
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Order Details</h5>
+                            <p class="card-text">
+                                <strong>Order Number:</strong> #{{ order.order_number }}<br>
+                                <strong>Total Amount:</strong> Ksh <span id="orderTotalAmount">{{ order.total_amount|floatformat:2 }}</span><br>
+                                <strong>Delivery to:</strong> {{ order.delivery_address }}<br>
+                                <strong>Customer:</strong> {{ order.customer.name }} ({{ order.customer.phone }})
+                            </p>
+                        </div>
+                    </div>
+
+                    {% if order_items %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Order Items</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="list-group list-group-flush">
+                                {% for item in order_items %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="text-start">
+                                        <div class="fw-medium">
+                                            {% if item.notes %}
+                                                {{ item.notes }}
+                                            {% else %}
+                                                {{ item.menu_item.name }}
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted">{{ item.quantity }} × Ksh {{ item.unit_price }}</small>
+                                    </div>
+                                    <span class="fw-bold">Ksh {{ item.get_total|floatformat:2 }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-phone me-2"></i>What happens next?</h6>
+                        <p class="mb-0">
+                            We will call you at <strong>{{ order.customer.phone }}</strong> within 5 minutes 
+                            to confirm your order and provide delivery updates.
+                        </p>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'orders:online_order' %}" class="btn btn-primary me-3">
+                            <i class="fas fa-utensils me-2"></i>Place Another Order
+                        </a>
+                        <a href="/" class="btn btn-outline-secondary">
+                            <i class="fas fa-home me-2"></i>Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add this script to ensure total amount displays correctly -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Format the total amount display
+    const totalElement = document.getElementById('orderTotalAmount');
+    if (totalElement) {
+        const totalAmount = parseFloat('{{ order.total_amount }}');
+        if (!isNaN(totalAmount)) {
+            totalElement.textContent = totalAmount.toFixed(2);
+        }
+    }
+    
+    console.log('Order details:', {
+        orderNumber: '{{ order.order_number }}',
+        totalAmount: '{{ order.total_amount }}',
+        customer: '{{ order.customer.name }}',
+        phone: '{{ order.customer.phone }}'
+    });
+});
+</script>
+{% endblock %}

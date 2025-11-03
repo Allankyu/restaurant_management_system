@@ -1,0 +1,373 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sales Report{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Sales Report</h1>
+    <div>
+        <button class="btn btn-outline-secondary" id="exportBtn">
+            <i class="fas fa-download"></i> Export
+        </button>
+        <button class="btn btn-outline-primary" onclick="window.print()">
+            <i class="fas fa-print"></i> Print
+        </button>
+    </div>
+</div>
+
+<!-- Date Range Filter -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Filter Reports</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" 
+                       value="{{ request.GET.start_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" class="form-control" id="end_date" name="end_date"
+                       value="{{ request.GET.end_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="category" class="form-label">Category</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"i" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>₹{{ total_revenue|default:"0" }}</h4>
+                        <p class="mb-0">Total Revenue</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-rupee-sign fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ total_orders|default:"0" }}</h4>
+                        <p class="mb-0">Total Orders</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-shopping-cart fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>₹{{ average_order_value|default:"0" }}</h4>
+                        <p class="mb-0">Average Order</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-bar fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ unique_customers|default:"0" }}</h4>
+                        <p class="mb-0">Unique Customers</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sales Data Table -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Sales Data</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Orders</th>
+                        <th>Revenue</th>
+                        <th>Average Order</th>
+                        <th>Customers</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for period_data in period_sales %}
+                    <tr>
+                        <td>{{ period_data.period }}</td>
+                        <td>{{ period_data.orders }}</td>
+                        <td>₹{{ period_data.revenue }}</td>
+                        <td>₹{{ period_data.average_order }}</td>
+                        <td>{{ period_data.customers }}</td>
+                        <td>
+                            <span class="badge bg-{{ period_data.status_color }}">
+                                {{ period_data.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">No sales data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Top Selling Items -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Top Selling Items</h5>
+            </div>
+            <div class="card-body">
+                {% if top_selling_items %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                <th>Revenue</th>
+                                <th>% of Sales</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in top_selling_items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.menu_item__name }}</strong>
+                                    {% if item.menu_item__category__name %}
+                                    <br><small class="text-muted">{{ item.menu_item__category__name }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.total_quantity }}</td>
+                                <td>₹{{ item.total_revenue }}</td>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        {{ item.percentage|default:0|floatformat:1 }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No sales data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sales by Category -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Sales by Category</h5>
+            </div>
+            <div class="card-body">
+                {% if sales_by_category %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Revenue</th>
+                                <th>Orders</th>
+                                <th>% of Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for category in sales_by_category %}
+                            <tr>
+                                <td>
+                                    <strong>{{ category.menu_item__category__name }}</strong>
+                                </td>
+                                <td>₹{{ category.total_revenue }}</td>
+                                <td>{{ category.total_orders }}</td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {{ category.percentage|default:0|floatformat:1 }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No category data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Orders -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Recent Orders</h5>
+    </div>
+    <div class="card-body">
+        {% if recent_orders %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in recent_orders %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'orders:order_detail' order.pk %}" class="text-decoration-none">
+                                {{ order.order_number }}
+                            </a>
+                        </td>
+                        <td>{{ order.customer.name }}</td>
+                        <td>{{ order.created_at|date:"M d, Y" }}</td>
+                        <td>{{ order.order_items.count }}</td>
+                        <td>₹{{ order.total_amount }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if order.status == 'completed' or order.status == 'paid' %}bg-success
+                                {% elif order.status == 'cancelled' %}bg-danger
+                                {% elif order.status == 'pending' %}bg-warning
+                                {% else %}bg-primary{% endif %}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center">No recent orders</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Export functionality
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        // Get current filters
+        const params = new URLSearchParams(window.location.search);
+        
+        // Show loading
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+        
+        // Simulate export (you can implement actual CSV export here)
+        setTimeout(() => {
+            alert('Export functionality will download a CSV file with the current report data.');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }, 1000);
+    });
+    
+    // Set default dates if not set
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    
+    if (!startDate.value) {
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        startDate.value = oneWeekAgo.toISOString().split('T')[0];
+    }
+    
+    if (!endDate.value) {
+        endDate.value = new Date().toISOString().split('T')[0];
+    }
+});
+</script>
+
+<style>
+@media print {
+    .btn, .card-header .float-end, .card.mb-4:first-child {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #ddd !important;
+        break-inside: avoid;
+    }
+    
+    .badge {
+        border: 1px solid #000 !important;
+        color: #000 !important;
+        background: transparent !important;
+    }
+}
+
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.table-sm td, .table-sm th {
+    padding: 0.5rem;
+}
+</style>
+{% endblock %}

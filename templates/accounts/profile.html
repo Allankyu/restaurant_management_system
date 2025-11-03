@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}User Profile{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-user-circle"></i> User Profile
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <div class="mb-4">
+                            <i class="fas fa-user-circle fa-5x text-primary mb-3"></i>
+                            <h5>{{ user.get_full_name|default:user.username }}</h5>
+                            <p class="text-muted">{{ user.email }}</p>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <h5>Account Information</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th style="width: 30%">Username:</th>
+                                    <td>{{ user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Email:</th>
+                                    <td>{{ user.email|default:"Not provided" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>First Name:</th>
+                                    <td>{{ user.first_name|default:"Not provided" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Last Name:</th>
+                                    <td>{{ user.last_name|default:"Not provided" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Last Login:</th>
+                                    <td>{{ user.last_login|default:"Never" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Date Joined:</th>
+                                    <td>{{ user.date_joined }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Account Status:</th>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle"></i> Active
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        {% if user.is_staff %}
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-shield-alt"></i>
+                            <strong>Staff Account:</strong> You have administrative privileges.
+                            <a href="{% url 'admin:index' %}" class="alert-link">Access Admin Panel</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session Information -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i> Session Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Current Session:</strong> Started {% now "F j, Y, g:i a" %}</p>
+                        <p><strong>Browser:</strong> <span id="browser-info">Detecting...</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>IP Address:</strong> {{ request.META.REMOTE_ADDR }}</p>
+                        <p><strong>User Agent:</strong> <small class="text-muted">{{ request.META.HTTP_USER_AGENT|truncatewords:10 }}</small></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Detect browser information
+document.addEventListener('DOMContentLoaded', function() {
+    const browserInfo = document.getElementById('browser-info');
+    const userAgent = navigator.userAgent;
+    
+    if (userAgent.includes('Chrome')) {
+        browserInfo.textContent = 'Google Chrome';
+    } else if (userAgent.includes('Firefox')) {
+        browserInfo.textContent = 'Mozilla Firefox';
+    } else if (userAgent.includes('Safari')) {
+        browserInfo.textContent = 'Apple Safari';
+    } else if (userAgent.includes('Edge')) {
+        browserInfo.textContent = 'Microsoft Edge';
+    } else {
+        browserInfo.textContent = 'Unknown Browser';
+    }
+});
+</script>
+{% endblock %}

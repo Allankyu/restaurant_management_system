@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit {{ employee.user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Edit {{ employee.user.get_full_name }}</h1>
+    <a href="{% url 'core:employee_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Employees
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Employee Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <h6 class="mb-3">Account Information</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-control" value="{{ employee.user.username }}" readonly>
+                            <div class="form-text">Username cannot be changed</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   placeholder="Leave blank to keep current password">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">First Name *</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" 
+                                   value="{{ employee.user.first_name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Last Name *</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" 
+                                   value="{{ employee.user.last_name }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ employee.user.email|default:'' }}">
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h6 class="mb-3">Employment Details</h6>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Employee ID</label>
+                            <input type="text" class="form-control" value="{{ employee.employee_id }}" readonly>
+                            <div class="form-text">Employee ID cannot be changed</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="employee_type" class="form-label">Position *</label>
+                            <select class="form-select" id="employee_type" name="employee_type" required>
+                                <option value="manager" {% if employee.employee_type == 'manager' %}selected{% endif %}>Manager</option>
+                                <option value="chef" {% if employee.employee_type == 'chef' %}selected{% endif %}>Chef</option>
+                                <option value="waiter" {% if employee.employee_type == 'waiter' %}selected{% endif %}>Waiter</option>
+                                <option value="cashier" {% if employee.employee_type == 'cashier' %}selected{% endif %}>Cashier</option>
+                                <option value="cleaner" {% if employee.employee_type == 'cleaner' %}selected{% endif %}>Cleaner</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="salary" class="form-label">Salary</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="salary" name="salary" 
+                                       value="{{ employee.salary|default:'' }}" step="0.01" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="hire_date" class="form-label">Hire Date</label>
+                            <input type="date" class="form-control" id="hire_date" name="hire_date" 
+                                   value="{{ employee.hire_date|date:'Y-m-d'|default:'' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" 
+                               value="{{ employee.phone|default:'' }}" placeholder="+1234567890">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="3" 
+                                  placeholder="Enter employee's address">{{ employee.address|default:'' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active" 
+                               {% if employee.user.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">Account is active</label>
+                        <div class="form-text">Uncheck to deactivate this employee account</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Employee
+                        </button>
+                        
+                        {% if employee.user.is_active %}
+                        <a href="{% url 'core:employee_delete' employee.id %}" class="btn btn-outline-danger">
+                            <i class="fas fa-trash"></i> Delete Employee
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Display form errors if any -->
+{% if form.errors %}
+<div class="row justify-content-center mt-3">
+    <div class="col-md-8">
+        <div class="alert alert-danger">
+            <h6 class="alert-heading">Please correct the following errors:</h6>
+            <ul class="mb-0">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Success message display -->
+{% if messages %}
+<div class="row justify-content-center mt-3">
+    <div class="col-md-8">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

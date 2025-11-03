@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Receipt - {{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Receipt Preview</h4>
+                        <div>
+                            <a href="{% url 'orders:print_receipt' order.pk %}" class="btn btn-success btn-sm" target="_blank">
+                                <i class="fas fa-print"></i> Print
+                            </a>
+                            <a href="{% url 'orders:order_detail' order.pk %}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Receipt Content (same as print version but with Bootstrap styling) -->
+                    <div class="receipt-preview border p-3 bg-light">
+                        <div class="text-center border-bottom pb-2 mb-2">
+                            <h5 class="mb-1">{{ business_name }}</h5>
+                            <p class="mb-1 small text-muted">{{ business_address }}</p>
+                            <p class="mb-1 small text-muted">Tel: {{ business_phone }}</p>
+                            <p class="mb-0 small text-muted">{{ order.branch.name }}</p>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <p class="mb-1"><strong>Receipt: {{ order.order_number }}</strong></p>
+                            <p class="mb-1 small">Date: {{ order.created_at|date:"d/m/Y H:i" }}</p>
+                            <p class="mb-1 small">Customer: {{ order.customer.name }}</p>
+                            <p class="mb-1 small">Type: {{ order.get_order_type_display }}</p>
+                            {% if order.table_number %}
+                            <p class="mb-1 small">Table: {{ order.table_number }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <table class="table table-sm table-borderless mb-2">
+                            <thead>
+                                <tr class="border-bottom">
+                                    <th>ITEM</th>
+                                    <th class="text-center">QTY</th>
+                                    <th class="text-end">AMOUNT</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order_items %}
+                                <tr>
+                                    <td>
+                                        {{ item.display_name }}
+                                        {% if item.is_custom_combo %}
+                                        <span class="badge bg-primary">COMBO</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">{{ item.quantity }}</td>
+                                    <td class="text-end">Ksh {{ item.subtotal }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        
+                        <div class="border-top pt-2">
+                            <div class="d-flex justify-content-between">
+                                <span>Subtotal:</span>
+                                <span>Ksh {{ order.total_amount }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Tax (0%):</span>
+                                <span>Ksh 0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between fw-bold border-top pt-1">
+                                <span>TOTAL:</span>
+                                <span>Ksh {{ order.total_amount }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-3 border-top pt-2">
+                            <p class="fw-bold mb-1">THANK YOU FOR YOUR BUSINESS!</p>
+                            <p class="small text-muted mb-0">Receipt: {{ order.order_number }}</p>
+                            <p class="small text-muted mb-0">Generated: {% now "d/m/Y H:i" %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

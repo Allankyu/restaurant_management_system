@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if is_admin %}Add New Employee - System Admin{% else %}Add New Employee - {{ manager_branch.name }}{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        {% if is_admin %}
+            <i class="fas fa-user-shield text-danger"></i> Add New Employee - System Admin
+        {% else %}
+            Add New Employee - {{ manager_branch.name }}
+        {% endif %}
+    </h1>
+    <a href="{% url 'core:employee_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Employees
+    </a>
+</div>
+
+{% if is_admin %}
+<div class="alert alert-warning">
+    <i class="fas fa-user-shield"></i> 
+    <strong>Admin Mode:</strong> You can assign this employee to any branch or leave unassigned.
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> 
+    This employee will be assigned to <strong>{{ manager_branch.name }}</strong> branch.
+</div>
+{% endif %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Employee Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Branch Selection - Different for Admin vs Manager -->
+                    <div class="mb-3">
+                        <label class="form-label">Branch {% if is_admin %}(Optional){% else %}*{% endif %}</label>
+                        {% if is_admin %}
+                        <select class="form-select" id="branch" name="branch">
+                            <option value="">No Branch Assignment</option>
+                            {% for branch in branches %}
+                            <option value="{{ branch.id }}">{{ branch.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">As admin, you can assign to any branch or leave unassigned</div>
+                        {% else %}
+                        <input type="text" class="form-control" value="{{ manager_branch.name }}" readonly>
+                        <input type="hidden" name="branch" value="{{ manager_branch.id }}">
+                        <div class="form-text">Employee will be assigned to your branch</div>
+                        {% endif %}
+                    </div>
+                    
+                    <h6 class="mb-3">Account Information</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Username *</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                            <div class="form-text">Used for login</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Password *</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">First Name *</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Last Name *</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email">
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h6 class="mb-3">Employment Details</h6>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="employee_id" class="form-label">Employee ID *</label>
+                            <input type="text" class="form-control" id="employee_id" name="employee_id" 
+                                   placeholder="e.g., EMP001, WAIT001" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="employee_type" class="form-label">Position *</label>
+                            <select class="form-select" id="employee_type" name="employee_type" required>
+                                <option value="">Select Position</option>
+                                {% if is_admin %}
+                                <option value="manager">Manager</option>
+                                {% endif %}
+                                <option value="chef">Chef</option>
+                                <option value="waiter">Waiter</option>
+                                <option value="cashier">Cashier</option>
+                                <option value="cleaner">Cleaner</option>
+                            </select>
+                            {% if is_admin %}
+                            <div class="form-text">Admins can create managers for any branch</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone Number *</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="salary" class="form-label">Monthly Salary (₹) *</label>
+                            <input type="number" class="form-control" id="salary" name="salary" 
+                                   min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address *</label>
+                        <textarea class="form-control" id="address" name="address" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active" checked>
+                        <label class="form-check-label" for="is_active">Account is active</label>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> 
+                            {% if is_admin %}
+                                Add Employee
+                            {% else %}
+                                Add Employee to {{ manager_branch.name }}
+                            {% endif %}
+                        </button>
+                        <a href="{% url 'core:employee_list' %}" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick Help Card -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Quick Guide</h6>
+            </div>
+            <div class="card-body">
+                {% if is_admin %}
+                <h6>Admin Employee Creation:</h6>
+                <ul class="mb-0">
+                    <li>Select any branch or leave unassigned</li>
+                    <li>Can create managers for any branch</li>
+                    <li>Employee will be available system-wide</li>
+                    <li>Use appropriate Employee ID format</li>
+                </ul>
+                {% else %}
+                <h6>To Create a Waiter:</h6>
+                <ul class="mb-0">
+                    <li>Fill in all required fields</li>
+                    <li>Select <strong>"Waiter"</strong> from the Position dropdown</li>
+                    <li>Use Employee ID starting with <strong>"WAIT"</strong> (e.g., WAIT001)</li>
+                    <li>Ensure "Account is active" is checked</li>
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-suggest Employee ID based on selected position
+document.getElementById('employee_type').addEventListener('change', function() {
+    const position = this.value;
+    const employeeIdField = document.getElementById('employee_id');
+    
+    if (position && !employeeIdField.value) {
+        const prefixes = {
+            'waiter': 'WAIT',
+            'chef': 'CHEF', 
+            'manager': 'MGR',
+            'cashier': 'CASH',
+            'cleaner': 'CLN'
+        };
+        
+        if (prefixes[position]) {
+            employeeIdField.placeholder = `e.g., ${prefixes[position]}001`;
+        }
+    }
+});
+</script>
+{% endblock %}

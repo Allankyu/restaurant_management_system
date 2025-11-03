@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Stock Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Stock Management</h1>
+    <a href="{% url 'inventory:inventory_dashboard' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Inventory
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="lowStockFilter" 
+                   {% if request.GET.low_stock == 'true' %}checked{% endif %}
+                   onchange="toggleLowStockFilter(this)">
+            <label class="form-check-label" for="lowStockFilter">
+                Show only low stock items
+            </label>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Ingredient</th>
+                        <th>Current Stock</th>
+                        <th>Alert Level</th>
+                        <th>Unit</th>
+                        <th>Status</th>
+                        <th>Cost/Unit</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in stock_items %}
+                    <tr>
+                        <td>{{ item.ingredient.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.alert_level }}</td>
+                        <td>{{ item.ingredient.unit }}</td>
+                        <td>
+                            {% if item.is_low_stock %}
+                                <span class="badge bg-danger">Low Stock</span>
+                            {% else %}
+                                <span class="badge bg-success">Adequate</span>
+                            {% endif %}
+                        </td>
+                        <td>₹{{ item.ingredient.cost_per_unit }}</td>
+                        <td>
+                            <a href="{% url 'admin:inventory_stock_change' item.pk %}" class="btn btn-sm btn-warning">Update</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center">No stock items found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleLowStockFilter(checkbox) {
+    const lowStockParam = checkbox.checked ? 'true' : '';
+    window.location.href = '{% url "inventory:stock_list" %}?low_stock=' + lowStockParam;
+}
+</script>
+{% endblock %}

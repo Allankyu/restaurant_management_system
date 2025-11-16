@@ -15,7 +15,7 @@ SECRET_KEY = 'django-insecure-z+0ha60f($4l6f=2781t^392#fc(1h4g=y6_u+rua@-kl@&e4_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['imranx.pythonanywhere.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -126,7 +126,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+#STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 #media files
 MEDIA_URL = '/media/'

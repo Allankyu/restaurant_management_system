@@ -144,10 +144,10 @@
                                 {{ item.get_item_type_display }}
                             </span>
                         </td>
-                        <td class="fw-bold text-success">Ksh {{ item.actual_price }}</td>
-                        <td class="text-muted">Ksh {{ item.cost_price }}</td>
+                        <td class="fw-bold text-success">Ugx {{ item.actual_price }}</td>
+                        <td class="text-muted">Ugx {{ item.cost_price }}</td>
                         <td class="fw-bold {% if item.profit_margin > 0 %}text-success{% else %}text-danger{% endif %}">
-                            Ksh {{ item.profit_margin }}
+                            Ugx {{ item.profit_margin }}
                         </td>
                         <td>
                             {% if item.is_available %}
@@ -324,3 +324,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+
+
+

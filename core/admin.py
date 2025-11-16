@@ -16,3 +16,6 @@ class EmployeeAdmin(ImportExportModelAdmin):
 class CustomerAdmin(ImportExportModelAdmin):
     list_display = ['name', 'phone', 'email', 'created_at']
     search_fields = ['name', 'phone', 'email']
+
+
+

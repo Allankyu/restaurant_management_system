@@ -19,3 +19,7 @@ class Migration(migrations.Migration):
             options={'ordering': ['table_number']},
         ),
     ]
+
+
+
+

@@ -13,3 +13,6 @@ class OrderAdmin(admin.ModelAdmin):
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ['order', 'menu_item', 'quantity', 'unit_price', 'subtotal']
     list_filter = ['order__status']
+
+
+

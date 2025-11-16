@@ -59,7 +59,7 @@
                                         {% endif %}
                                     </td>
                                     <td class="text-center">{{ item.quantity }}</td>
-                                    <td class="text-end">Ksh {{ item.subtotal }}</td>
+                                    <td class="text-end">Ugx {{ item.subtotal }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -68,15 +68,15 @@
                         <div class="border-top pt-2">
                             <div class="d-flex justify-content-between">
                                 <span>Subtotal:</span>
-                                <span>Ksh {{ order.total_amount }}</span>
+                                <span>Ugx {{ order.total_amount }}</span>
                             </div>
                             <div class="d-flex justify-content-between">
                                 <span>Tax (0%):</span>
-                                <span>Ksh 0.00</span>
+                                <span>Ugx 0.00</span>
                             </div>
                             <div class="d-flex justify-content-between fw-bold border-top pt-1">
                                 <span>TOTAL:</span>
-                                <span>Ksh {{ order.total_amount }}</span>
+                                <span>Ugx {{ order.total_amount }}</span>
                             </div>
                         </div>
                         
@@ -92,3 +92,6 @@
     </div>
 </div>
 {% endblock %}
+
+
+

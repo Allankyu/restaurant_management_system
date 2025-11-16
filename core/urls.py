@@ -26,3 +26,6 @@ urlpatterns = [
     path('employees/<int:pk>/delete/', views.employee_delete, name='employee_delete'),
     path('branches/<int:branch_id>/admin-dashboard/', views.admin_branch_dashboard, name='admin_branch_dashboard'),
 ]
+
+
+

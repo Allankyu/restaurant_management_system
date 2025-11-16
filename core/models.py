@@ -118,3 +118,6 @@ class Customer(models.Model):
         return self.order_set.count()
     
     orders_count.short_description = 'Total Orders'
+
+
+

@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Payment Status</h2>
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Transaction #{{ transaction.transaction_id }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Order Number:</strong> {{ order.order_number }}</p>
+                    <p><strong>Payment Method:</strong> {{ transaction.get_provider_display }}</p>
+                    <p><strong>Phone Number:</strong> {{ transaction.phone_number }}</p>
+                    <p><strong>Amount:</strong> UGX {{ transaction.amount }}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge 
+                            {% if transaction.status == 'successful' %}bg-success
+                            {% elif transaction.status == 'failed' %}bg-danger
+                            {% else %}bg-warning{% endif %}">
+                            {{ transaction.get_status_display }}
+                        </span>
+                    </p>
+                    <p><strong>Date:</strong> {{ transaction.created_at }}</p>
+                </div>
+            </div>
+            
+            {% if transaction.status == 'pending' %}
+            <div class="alert alert-info mt-3">
+                <h6>Payment Processing</h6>
+                <p class="mb-0">Payment is being processed. Please check your phone to complete the transaction.</p>
+                <p class="mb-0">This page will update automatically when payment is confirmed.</p>
+            </div>
+            
+            <!-- Auto-refresh for pending payments -->
+            <script>
+                setTimeout(function() {
+                    window.location.reload();
+                }, 5000); // Refresh every 5 seconds
+            </script>
+            {% elif transaction.status == 'successful' %}
+            <div class="alert alert-success mt-3">
+                <h6>Payment Successful!</h6>
+                <p class="mb-0">Your payment has been confirmed. Order status has been updated to Paid.</p>
+            </div>
+            {% elif transaction.status == 'failed' %}
+            <div class="alert alert-danger mt-3">
+                <h6>Payment Failed</h6>
+                <p class="mb-0">{{ transaction.error_message|default:"Payment could not be processed. Please try again." }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="mt-3">
+                <a href="{% url 'order_detail' order.id %}" class="btn btn-primary">Back to Order</a>
+                {% if transaction.status == 'failed' %}
+                <a href="{% url 'payments:initiate_payment' order.id %}" class="btn btn-warning">Try Again</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

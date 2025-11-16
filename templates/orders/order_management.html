@@ -90,7 +90,7 @@
                                     {{ order.get_status_display }}
                                 </span>
                             </td>
-                            <td>Ksh {{ order.total_amount }}</td>
+                            <td>Ugx {{ order.total_amount }}</td>
                             <td>{{ order.created_at|date:"M d, Y H:i" }}</td>
                             <td>
                                 <a href="{% url 'orders:order_detail_management' order.id %}" 
@@ -115,3 +115,6 @@
     </div>
 </div>
 {% endblock %}
+
+
+

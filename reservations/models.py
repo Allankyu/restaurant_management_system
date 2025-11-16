@@ -59,3 +59,6 @@ class Reservation(models.Model):
         )
         end_datetime = reservation_datetime + timedelta(minutes=self.duration)
         return end_datetime.time()
+
+
+

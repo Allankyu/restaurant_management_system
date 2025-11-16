@@ -1,7 +1,5 @@
 // static/js/online_order.js
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Online order JS loaded');
-    
     // Order items management
     let orderItems = {};
     let itemCounter = 0;
@@ -11,7 +9,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalElement = document.getElementById('onlineTotal');
     const totalAmountInput = document.getElementById('onlineTotalAmount');
     const submitBtn = document.getElementById('submitOnlineOrderBtn');
-    const deliveryFee = 100;
 
     // Custom combo elements
     const customBaseSelect = document.getElementById('customBaseSelect');
@@ -27,38 +24,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const proteinPreviewPrice = document.getElementById('proteinPreviewPrice');
     const customComboInputs = document.getElementById('customComboInputs');
 
-    console.log('Elements found:', {
-        orderItemsList: !!orderItemsList,
-        subtotalElement: !!subtotalElement,
-        totalElement: !!totalElement,
-        totalAmountInput: !!totalAmountInput,
-        submitBtn: !!submitBtn,
-        customBaseSelect: !!customBaseSelect,
-        customSourceSelect: !!customSourceSelect,
-        addCustomComboBtn: !!addCustomComboBtn
-    });
-
     // Initialize quantity buttons
     function initializeQuantityButtons() {
-        console.log('Initializing quantity buttons...');
-        
         // Quantity button handlers for plus buttons
         document.querySelectorAll('.plus-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                console.log('Plus button clicked');
                 const itemId = this.getAttribute('data-item');
-                console.log('Item ID:', itemId);
-                
                 const input = document.getElementById('qty_' + itemId);
-                if (!input) {
-                    console.error('Input not found for item:', itemId);
-                    return;
-                }
+                if (!input) return;
                 
                 const currentValue = parseInt(input.value) || 0;
                 const newValue = currentValue + 1;
                 input.value = newValue;
-                console.log('New quantity:', newValue);
                 
                 updateMenuItemQuantity(itemId, newValue);
             });
@@ -67,44 +44,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // Quantity button handlers for minus buttons
         document.querySelectorAll('.minus-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                console.log('Minus button clicked');
                 const itemId = this.getAttribute('data-item');
-                console.log('Item ID:', itemId);
-                
                 const input = document.getElementById('qty_' + itemId);
-                if (!input) {
-                    console.error('Input not found for item:', itemId);
-                    return;
-                }
+                if (!input) return;
                 
                 const currentValue = parseInt(input.value) || 0;
                 if (currentValue > 0) {
                     const newValue = currentValue - 1;
                     input.value = newValue;
-                    console.log('New quantity:', newValue);
                     updateMenuItemQuantity(itemId, newValue);
                 }
             });
         });
-        
-        console.log('Quantity buttons initialized. Found:', 
-            document.querySelectorAll('.plus-btn').length, 'plus buttons and',
-            document.querySelectorAll('.minus-btn').length, 'minus buttons'
-        );
     }
 
     // Initialize custom combo functionality
     function initializeCustomCombos() {
-        console.log('Initializing custom combo functionality...');
-        
         if (addCustomComboBtn) {
             addCustomComboBtn.addEventListener('click', addCustomCombo);
-            console.log('Custom combo button initialized');
         }
         
         if (addProteinOnlyBtn) {
             addProteinOnlyBtn.addEventListener('click', addProteinOnly);
-            console.log('Protein only button initialized');
         }
         
         // Update preview when selections change
@@ -131,17 +92,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (proteinOnlyPreview) proteinOnlyPreview.style.display = 'none';
 
         if (baseOptions.length > 0 && sourceId) {
-            // Show combo preview
+            // Show combo preview - include ALL base foods (free and priced)
             const baseNames = [];
             let totalPrice = 0;
             
             baseOptions.forEach(function(option) {
-                const baseName = option.text.split(' (+Ksh')[0];
+                const baseName = option.text.split(' (+Ugx')[0].trim();
                 const basePrice = parseFloat(option.dataset.price) || 0;
                 const baseType = option.dataset.type;
                 
                 if (baseType === 'priced') {
-                    baseNames.push(baseName + ' (+Ksh ' + basePrice + ')');
+                    baseNames.push(baseName + ' (+Ugx ' + basePrice + ')');
                     totalPrice += basePrice;
                 } else {
                     baseNames.push(baseName);
@@ -149,46 +110,39 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const sourceOption = customSourceSelect.options[customSourceSelect.selectedIndex];
-            const sourceName = sourceOption.text.split(' - Ksh')[0];
+            const sourceName = sourceOption.text.split(' - Ugx')[0].trim();
             const sourcePrice = parseFloat(sourceOption.dataset.price) || 0;
             
             totalPrice += sourcePrice;
 
+            // Format price display - leave blank for free items
+            let priceDisplay = '';
+            if (totalPrice > 0) {
+                priceDisplay = 'Ugx ' + (totalPrice * quantity).toFixed(2);
+            }
+
             if (comboPreviewText) comboPreviewText.textContent = baseNames.join(' + ') + ' with ' + sourceName + ' × ' + quantity;
-            if (comboPreviewPrice) comboPreviewPrice.textContent = 'Ksh ' + (totalPrice * quantity).toFixed(2);
+            if (comboPreviewPrice) comboPreviewPrice.textContent = priceDisplay;
             if (customComboPreview) customComboPreview.style.display = 'block';
 
         } else if (!baseOptions.length && sourceId) {
             // Show protein only preview
             const sourceOption = customSourceSelect.options[customSourceSelect.selectedIndex];
-            const sourceName = sourceOption.text.split(' - Ksh')[0];
+            const sourceName = sourceOption.text.split(' - Ugx')[0].trim();
             const sourcePrice = parseFloat(sourceOption.dataset.price) || 0;
             const totalPrice = sourcePrice * quantity;
 
-            if (proteinPreviewText) proteinPreviewText.textContent = sourceName + ' × ' + quantity;
-            if (proteinPreviewPrice) proteinPreviewPrice.textContent = 'Ksh ' + totalPrice.toFixed(2);
-            if (proteinOnlyPreview) proteinOnlyPreview.style.display = 'block';
-        } else if (baseOptions.length > 0 && !sourceId) {
-            // Show base only preview for priced base foods
-            const pricedBases = baseOptions.filter(function(option) {
-                return option.dataset.type === 'priced';
-            });
-            if (pricedBases.length > 0) {
-                const baseNames = [];
-                let totalPrice = 0;
-                
-                pricedBases.forEach(function(option) {
-                    const baseName = option.text.split(' (+Ksh')[0];
-                    const basePrice = parseFloat(option.dataset.price) || 0;
-                    baseNames.push(baseName + ' (+Ksh ' + basePrice + ')');
-                    totalPrice += basePrice;
-                });
-
-                if (comboPreviewText) comboPreviewText.textContent = baseNames.join(' + ') + ' × ' + quantity;
-                if (comboPreviewPrice) comboPreviewPrice.textContent = 'Ksh ' + (totalPrice * quantity).toFixed(2);
-                if (customComboPreview) customComboPreview.style.display = 'block';
+            // Format price display - leave blank for free items
+            let priceDisplay = '';
+            if (totalPrice > 0) {
+                priceDisplay = 'Ugx ' + totalPrice.toFixed(2);
             }
+
+            if (proteinPreviewText) proteinPreviewText.textContent = sourceName + ' × ' + quantity;
+            if (proteinPreviewPrice) proteinPreviewPrice.textContent = priceDisplay;
+            if (proteinOnlyPreview) proteinOnlyPreview.style.display = 'block';
         }
+        // Removed base-only preview since base foods alone are not allowed
     }
 
     function addCustomCombo() {
@@ -198,20 +152,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const sourceId = customSourceSelect.value;
         const quantity = parseInt(customQuantity.value) || 1;
 
-        // Check if we have priced base foods without protein (base only)
-        const pricedBases = baseOptions.filter(function(option) {
-            return option.dataset.type === 'priced';
-        });
-        
-        if (baseOptions.length > 0 && !sourceId && pricedBases.length > 0) {
-            // Handle priced base foods without protein
-            addBaseOnlyItems(baseOptions, quantity);
-        } else if (baseOptions.length > 0 && sourceId) {
-            // Handle custom combo with base + protein
-            addCustomComboWithProtein(baseOptions, sourceId, quantity);
-        } else {
-            alert('Please select at least one base food and a protein source, or priced base foods only.');
+        // Validate: Base foods must be paired with protein source
+        if (baseOptions.length > 0 && !sourceId) {
+            alert('Please select a protein source to go with your base food(s). Base foods cannot be ordered alone.');
             return;
+        }
+
+        // Validate: Must have either base+protein or protein only
+        if (baseOptions.length === 0 && !sourceId) {
+            alert('Please select at least one base food with a protein source, or a protein source alone.');
+            return;
+        }
+
+        // Allow base foods with protein OR protein only
+        if (baseOptions.length > 0 && sourceId) {
+            addCustomComboWithProtein(baseOptions, sourceId, quantity);
+        } else if (!baseOptions.length && sourceId) {
+            addProteinOnly();
         }
 
         // Reset form
@@ -219,6 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
         customSourceSelect.selectedIndex = 0;
         customQuantity.value = 1;
         if (customComboPreview) customComboPreview.style.display = 'none';
+        if (proteinOnlyPreview) proteinOnlyPreview.style.display = 'none';
 
         updateOrderTotal();
     }
@@ -226,32 +184,35 @@ document.addEventListener('DOMContentLoaded', function() {
     function addCustomComboWithProtein(baseOptions, sourceId, quantity) {
         const sourceOption = customSourceSelect.options[customSourceSelect.selectedIndex];
         
-        // Calculate total price
+        // Calculate total price - include ALL base options (free and priced)
         let totalPrice = 0;
+        const baseNames = [];
+        const baseIds = [];
+        
         baseOptions.forEach(function(option) {
-            totalPrice += parseFloat(option.dataset.price) || 0;
-        });
-        totalPrice += parseFloat(sourceOption.dataset.price) || 0;
-
-        // Build display name
-        const baseNames = baseOptions.map(function(option) {
-            const baseName = option.text.split(' (+Ksh')[0];
+            const baseName = option.text.split(' (+Ugx')[0].trim();
             const basePrice = parseFloat(option.dataset.price) || 0;
             const baseType = option.dataset.type;
             
+            // Add to base names for display
             if (baseType === 'priced') {
-                return baseName + ' (+' + basePrice + ')';
+                baseNames.push(baseName + ' (+Ugx ' + basePrice + ')');
+                totalPrice += basePrice;
+            } else {
+                baseNames.push(baseName);
             }
-            return baseName;
+            
+            baseIds.push(option.value);
         });
         
-        const sourceName = sourceOption.text.split(' - Ksh')[0];
+        // Add protein price
+        const sourcePrice = parseFloat(sourceOption.dataset.price) || 0;
+        totalPrice += sourcePrice;
+        
+        const sourceName = sourceOption.text.split(' - Ugx')[0].trim();
         const displayName = 'Custom: ' + baseNames.join(' + ') + ' with ' + sourceName;
-        const baseIds = baseOptions.map(function(option) {
-            return option.value;
-        });
 
-        // Create hidden inputs
+        // Create hidden inputs for ALL base foods (free and priced)
         createHiddenInput('custom_base_items[]', baseIds.join(','));
         createHiddenInput('custom_source_items[]', sourceId);
         createHiddenInput('custom_quantities[]', quantity);
@@ -259,27 +220,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Add to order items (check for duplicates)
         addOrderItem(displayName, totalPrice, quantity, 'custom_combo');
-    }
-
-    function addBaseOnlyItems(baseOptions, quantity) {
-        const pricedBases = baseOptions.filter(function(option) {
-            return option.dataset.type === 'priced';
-        });
-        
-        pricedBases.forEach(function(baseOption) {
-            const baseName = baseOption.text.split(' (+Ksh')[0];
-            const basePrice = parseFloat(baseOption.dataset.price) || 0;
-            const displayName = baseName + ' (Base Only)';
-
-            // Create hidden inputs for each priced base
-            createHiddenInput('custom_base_items[]', baseOption.value);
-            createHiddenInput('custom_source_items[]', '');
-            createHiddenInput('custom_quantities[]', quantity);
-            createHiddenInput('custom_types[]', 'base_only');
-
-            // Add to order items (check for duplicates)
-            addOrderItem(displayName, basePrice, quantity, 'base_only');
-        });
     }
 
     function addProteinOnly() {
@@ -294,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const sourceOption = customSourceSelect.options[customSourceSelect.selectedIndex];
-        const sourceName = sourceOption.text.split(' - Ksh')[0];
+        const sourceName = sourceOption.text.split(' - Ugx')[0].trim();
         const unitPrice = parseFloat(sourceOption.dataset.price) || 0;
         const displayName = 'Protein Only: ' + sourceName;
 
@@ -322,124 +262,79 @@ document.addEventListener('DOMContentLoaded', function() {
         input.name = name;
         input.value = value;
         customComboInputs.appendChild(input);
-        console.log('Created hidden input:', name, value);
     }
 
     function updateMenuItemQuantity(itemId, quantity) {
-        console.log('=== UPDATE MENU ITEM QUANTITY ===');
-        console.log('Item ID:', itemId, 'Quantity:', quantity);
-        
         const input = document.getElementById('qty_' + itemId);
-        if (!input) {
-            console.error('Input not found for update:', itemId);
-            return;
-        }
+        if (!input) return;
         
         // Get price from data attribute
         const priceText = input.getAttribute('data-price');
-        console.log('Price text:', priceText);
-        
         const price = parseFloat(priceText);
-        if (isNaN(price)) {
-            console.error('Invalid price for item:', itemId, 'Price text:', priceText);
-            return;
-        }
-        console.log('Parsed price:', price);
+        if (isNaN(price)) return;
         
-        // Find the card and get display name - use a more reliable selector
-        let card = null;
+        // Find the card and get display name
         let displayName = '';
-        
-        // Try multiple ways to find the card and name
         const cardElement = input.closest('.card');
         if (cardElement) {
-            card = cardElement;
             const titleElement = cardElement.querySelector('.card-title');
             if (titleElement) {
                 displayName = titleElement.textContent.trim();
             }
         }
         
-        // If not found, try finding by data-item attribute
-        if (!displayName) {
-            const itemElement = document.querySelector('[data-item="' + itemId + '"]');
-            if (itemElement) {
-                const parentCard = itemElement.closest('.card');
-                if (parentCard) {
-                    const titleElement = parentCard.querySelector('.card-title');
-                    if (titleElement) {
-                        displayName = titleElement.textContent.trim();
-                    }
-                }
-            }
-        }
-        
-        // If still not found, create a generic name
+        // If not found, create a generic name
         if (!displayName) {
             displayName = 'Menu Item ' + itemId;
         }
         
-        console.log('Found display name:', displayName);
-        
         // Find if this item already exists
         const existingItemKey = findExistingItem(displayName, 'regular');
-        console.log('Existing item key:', existingItemKey);
         
         if (quantity === 0) {
             if (existingItemKey) {
-                console.log('Removing item:', displayName);
                 delete orderItems[existingItemKey];
             }
         } else {
             if (existingItemKey) {
                 // Update existing item
-                console.log('Updating existing item:', displayName, 'New quantity:', quantity);
                 orderItems[existingItemKey].quantity = quantity;
                 orderItems[existingItemKey].total_price = price * quantity;
             } else {
                 // Add new item
                 const itemKey = 'item_' + itemCounter++;
-                console.log('Adding new item:', displayName, 'Quantity:', quantity, 'Price:', price);
                 orderItems[itemKey] = {
                     quantity: quantity,
                     unit_price: price,
-                    total_price: price * quantity,  // FIXED: Changed = to :
+                    total_price: price * quantity,
                     display_name: displayName,
                     type: 'regular'
                 };
             }
         }
         
-        console.log('Current order items:', orderItems);
         updateOrderDisplay();
         updateOrderTotal();
     }
 
     function findExistingItem(displayName, type) {
-        const key = Object.keys(orderItems).find(function(itemKey) {
+        return Object.keys(orderItems).find(function(itemKey) {
             const item = orderItems[itemKey];
             return item.display_name === displayName && item.type === type;
         });
-        console.log('findExistingItem result for', displayName, ':', key);
-        return key;
     }
 
     function addOrderItem(displayName, unitPrice, quantity, type) {
-        console.log('=== ADD ORDER ITEM ===');
-        console.log('Display Name:', displayName, 'Unit Price:', unitPrice, 'Quantity:', quantity, 'Type:', type);
-        
         // Check if this item already exists to avoid duplicates
         const existingItemKey = findExistingItem(displayName, type);
         
         if (existingItemKey) {
             // Update existing item instead of creating duplicate
-            console.log('Updating existing item:', displayName);
             orderItems[existingItemKey].quantity += quantity;
             orderItems[existingItemKey].total_price = orderItems[existingItemKey].unit_price * orderItems[existingItemKey].quantity;
         } else {
             // Add new item
             const itemKey = 'item_' + itemCounter++;
-            console.log('Adding new item:', displayName, 'Quantity:', quantity, 'Price:', unitPrice);
             orderItems[itemKey] = {
                 quantity: quantity,
                 unit_price: unitPrice,
@@ -453,19 +348,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateOrderDisplay() {
-        console.log('=== UPDATE ORDER DISPLAY ===');
-        console.log('Order items count:', Object.keys(orderItems).length);
-        
-        if (!orderItemsList) {
-            console.error('Order items list element not found');
-            return;
-        }
+        if (!orderItemsList) return;
         
         orderItemsList.innerHTML = '';
         
         if (Object.keys(orderItems).length === 0) {
             orderItemsList.innerHTML = '<p class="text-muted text-center small">No items added yet</p>';
-            console.log('Display: No items added');
             return;
         }
 
@@ -475,23 +363,42 @@ document.addEventListener('DOMContentLoaded', function() {
             const item = orderItems[key];
             if (item.quantity > 0) {
                 hasItems = true;
+                
+                // Format price display - leave blank for items with price 0
+                let priceDisplay = '';
+                let subtotalDisplay = '';
+                
+                if (item.unit_price > 0) {
+                    priceDisplay = 'Ugx ' + item.unit_price.toFixed(2);
+                    subtotalDisplay = 'Ugx ' + item.total_price.toFixed(2);
+                }
+                
                 const itemElement = document.createElement('div');
                 itemElement.className = 'd-flex justify-content-between align-items-center border-bottom py-2 small';
+                
+                let priceHtml = '';
+                if (priceDisplay) {
+                    priceHtml = '<small class="text-muted">' + item.quantity + ' × ' + priceDisplay + '</small>';
+                }
+                
+                let subtotalHtml = '';
+                if (subtotalDisplay) {
+                    subtotalHtml = '<div class="fw-bold">' + subtotalDisplay + '</div>';
+                }
+                
                 itemElement.innerHTML = '<div class="flex-grow-1">' +
                     '<div class="fw-medium">' + item.display_name + '</div>' +
-                    '<small class="text-muted">' + item.quantity + ' × Ksh ' + item.unit_price.toFixed(2) + '</small>' +
+                    priceHtml +
                     '</div>' +
                     '<div class="text-end">' +
-                    '<div class="fw-bold">Ksh ' + item.total_price.toFixed(2) + '</div>' +
+                    subtotalHtml +
                     '</div>';
                 orderItemsList.appendChild(itemElement);
-                console.log('Added to display:', item.display_name, 'Qty:', item.quantity);
             }
         });
         
         if (!hasItems) {
             orderItemsList.innerHTML = '<p class="text-muted text-center small">No items added yet</p>';
-            console.log('Display: No items with quantity > 0');
         }
     }
 
@@ -504,16 +411,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        const total = subtotal + deliveryFee;
-        
-        console.log('=== UPDATE ORDER TOTAL ===');
-        console.log('Subtotal:', subtotal, 'Total:', total);
+        // No delivery fee - Total is same as subtotal
+        const total = subtotal;
         
         if (subtotalElement) {
-            subtotalElement.textContent = 'Ksh ' + subtotal.toFixed(2);
+            subtotalElement.textContent = 'Ugx ' + subtotal.toFixed(2);
         }
         if (totalElement) {
-            totalElement.textContent = 'Ksh ' + total.toFixed(2);
+            totalElement.textContent = 'Ugx ' + total.toFixed(2);
         }
         if (totalAmountInput) {
             totalAmountInput.value = total.toFixed(2);
@@ -523,7 +428,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (submitBtn) {
             const shouldDisable = subtotal === 0;
             submitBtn.disabled = shouldDisable;
-            console.log('Submit button disabled:', shouldDisable);
             
             // Visual feedback
             if (shouldDisable) {
@@ -536,17 +440,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // === FORM SUBMISSION HANDLER ===
+    // Form submission handler
     function setupFormSubmission() {
         const form = document.getElementById('onlineOrderForm');
-        if (!form) {
-            console.error('Online order form not found');
-            return;
-        }
+        if (!form) return;
 
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            console.log('=== ONLINE ORDER SUBMISSION STARTED ===');
             
             // Get customer information
             const customerName = document.getElementById('customer_name').value.trim();
@@ -556,10 +456,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const orderNotes = document.getElementById('order_notes').value.trim();
             const preferredDeliveryTime = document.getElementById('preferred_delivery_time') ? 
                 document.getElementById('preferred_delivery_time').value : 'asap';
-            
-            console.log('Customer details:', {
-                customerName, customerPhone, customerEmail, deliveryAddress, orderNotes, preferredDeliveryTime
-            });
 
             // Validate required fields
             if (!customerName) {
@@ -593,8 +489,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            console.log('All validations passed, submitting order...');
-
             // Show loading state
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Placing Order...';
@@ -614,8 +508,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const totalAmount = totalAmountInput ? totalAmountInput.value : calculateTotalAmount();
             formData.append('total_amount', totalAmount);
 
-            console.log('Total amount:', totalAmount);
-
             // Add regular menu items
             Object.keys(orderItems).forEach(function(key) {
                 const item = orderItems[key];
@@ -624,7 +516,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     const itemId = findMenuItemId(item.display_name);
                     if (itemId) {
                         formData.append(`qty_${itemId}`, item.quantity);
-                        console.log(`Added regular item: qty_${itemId} = ${item.quantity}`);
                     }
                 }
             });
@@ -634,8 +525,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const customSourceItems = document.querySelectorAll('input[name="custom_source_items[]"]');
             const customQuantities = document.querySelectorAll('input[name="custom_quantities[]"]');
             const customTypes = document.querySelectorAll('input[name="custom_types[]"]');
-
-            console.log(`Custom items: ${customBaseItems.length} base, ${customSourceItems.length} source, ${customQuantities.length} quantities`);
 
             customBaseItems.forEach(input => {
                 if (input.value) {
@@ -658,7 +547,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // === FIXED URL - Match your actual URL structure ===
+            // Submit order
             fetch('/orders/online/submit/', {
                 method: 'POST',
                 body: formData,
@@ -673,14 +562,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                console.log('Server response:', data);
-                
                 if (data.success) {
                     // Success - show message and redirect
                     showAlert(data.message || 'Order placed successfully!', 'success');
-                    console.log(`Order #${data.order_number} created successfully`);
                     
-                    // Redirect to success page after delay - FIXED URL
+                    // Redirect to success page after delay
                     setTimeout(() => {
                         window.location.href = `/orders/online/success/${data.order_id}/`;
                     }, 2000);
@@ -689,7 +575,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Order submission error:', error);
                 showAlert('Error placing order: ' + error.message, 'danger');
             })
             .finally(() => {
@@ -702,8 +587,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Helper function to find menu item ID from display name
     function findMenuItemId(displayName) {
-        console.log('Finding menu item ID for:', displayName);
-        
         // Look through all menu item cards
         const menuCards = document.querySelectorAll('.card');
         for (let card of menuCards) {
@@ -713,20 +596,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const input = card.querySelector('input[id^="qty_"]');
                 if (input) {
                     const itemId = input.id.replace('qty_', '');
-                    console.log('Found item ID:', itemId);
                     return itemId;
                 }
             }
         }
         
         // For custom items, we don't need to find a specific menu item ID
-        // as they're handled by the custom combo system
-        if (displayName.includes('Custom:') || displayName.includes('Protein Only:') || displayName.includes('(Base Only)')) {
-            console.log('Custom item detected, no specific menu item ID needed');
+        if (displayName.includes('Custom:') || displayName.includes('Protein Only:') || displayName.includes('(Base Only)') || displayName.includes('Free Base:')) {
             return null;
         }
         
-        console.warn('Could not find menu item ID for:', displayName);
         return null;
     }
 
@@ -738,7 +617,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 subtotal += item.total_price;
             }
         });
-        return (subtotal + deliveryFee).toFixed(2);
+        return subtotal.toFixed(2);
     }
 
     function showAlert(message, type) {
@@ -806,8 +685,4 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeCustomCombos();
     setupFormSubmission();
     updateOrderTotal();
-    
-    console.log('=== INITIALIZATION COMPLETE ===');
-    console.log('Order items:', orderItems);
-    console.log('Ready for user interaction');
 });

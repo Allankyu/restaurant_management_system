@@ -15,7 +15,7 @@ SECRET_KEY = 'django-insecure-z+0ha60f($4l6f=2781t^392#fc(1h4g=y6_u+rua@-kl@&e4_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['imranx.pythonanywhere.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'reservations',
     'reports',
     'notifications',
+    'payments', 
 ]
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
@@ -125,6 +126,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 #media files
 MEDIA_URL = '/media/'
@@ -159,3 +161,7 @@ EMAIL_HOST_PASSWORD = 'bclbffxpylgajlhp'
 
 DEFAULT_FROM_EMAIL = 'noreply@yourrestaurant.com'
 DEFAULT_REPLY_TO = 'info@yourrestaurant.com'
+
+
+
+

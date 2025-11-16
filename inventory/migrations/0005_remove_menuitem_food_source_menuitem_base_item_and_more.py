@@ -47,3 +47,7 @@ class Migration(migrations.Migration):
             field=models.CharField(choices=[('direct', 'Direct Price'), ('base', 'Base Item (Requires Source)'), ('source', 'Protein Source'), ('combo', 'Pre-defined Combo')], default='direct', max_length=10),
         ),
     ]
+
+
+
+

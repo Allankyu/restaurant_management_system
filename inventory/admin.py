@@ -127,7 +127,7 @@ class MenuItemAdmin(ImportExportModelAdmin):
     def actual_price_display(self, obj):
         """Display the actual calculated price"""
         if obj.pk:
-            return f"Ksh {obj.actual_price}"
+            return f"Ugx {obj.actual_price}"
         return "Save to see calculated price"
     actual_price_display.short_description = 'Calculated Price'
     
@@ -170,3 +170,6 @@ class BranchMenuItemAdmin(admin.ModelAdmin):
 
 # Register other models
 admin.site.register([Ingredient, Recipe, Utensil])
+
+
+

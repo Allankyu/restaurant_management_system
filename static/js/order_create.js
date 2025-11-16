@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalAmountInput = document.getElementById('totalAmountInput');
     const placeOrderBtn = document.getElementById('placeOrderBtn');
     const customerSelect = document.getElementById('customer');
-    const waiterSelect = document.getElementById('waiter'); // Added waiter select
+    const waiterSelect = document.getElementById('waiter');
     const customComboInputs = document.getElementById('customComboInputs');
 
     // Custom combo elements
@@ -83,17 +83,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (proteinOnlyPreview) proteinOnlyPreview.style.display = 'none';
 
         if (baseOptions.length > 0 && sourceId) {
-            // Show combo preview
+            // Show combo preview - include ALL base foods (free and priced)
             const baseNames = [];
             let totalPrice = 0;
             
             baseOptions.forEach(function(option) {
-                const baseName = option.text.split(' (+Ksh')[0];
+                const baseName = option.text.split(' (+Ugx')[0].trim();
                 const basePrice = parseFloat(option.dataset.price) || 0;
                 const baseType = option.dataset.type;
                 
                 if (baseType === 'priced') {
-                    baseNames.push(baseName + ' (+Ksh ' + basePrice + ')');
+                    baseNames.push(baseName + ' (+Ugx ' + basePrice + ')');
                     totalPrice += basePrice;
                 } else {
                     baseNames.push(baseName);
@@ -101,46 +101,39 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const sourceOption = customSourceSelect.options[customSourceSelect.selectedIndex];
-            const sourceName = sourceOption.text.split(' - Ksh')[0];
+            const sourceName = sourceOption.text.split(' - Ugx')[0].trim();
             const sourcePrice = parseFloat(sourceOption.dataset.price) || 0;
             
             totalPrice += sourcePrice;
 
+            // Format price display - leave blank for free items
+            let priceDisplay = '';
+            if (totalPrice > 0) {
+                priceDisplay = 'Ugx ' + (totalPrice * quantity).toFixed(2);
+            }
+
             if (comboPreviewText) comboPreviewText.textContent = baseNames.join(' + ') + ' with ' + sourceName + ' × ' + quantity;
-            if (comboPreviewPrice) comboPreviewPrice.textContent = 'Ksh ' + (totalPrice * quantity).toFixed(2);
+            if (comboPreviewPrice) comboPreviewPrice.textContent = priceDisplay;
             if (customComboPreview) customComboPreview.style.display = 'block';
 
         } else if (!baseOptions.length && sourceId) {
             // Show protein only preview
             const sourceOption = customSourceSelect.options[customSourceSelect.selectedIndex];
-            const sourceName = sourceOption.text.split(' - Ksh')[0];
+            const sourceName = sourceOption.text.split(' - Ugx')[0].trim();
             const sourcePrice = parseFloat(sourceOption.dataset.price) || 0;
             const totalPrice = sourcePrice * quantity;
 
-            if (proteinPreviewText) proteinPreviewText.textContent = sourceName + ' × ' + quantity;
-            if (proteinPreviewPrice) proteinPreviewPrice.textContent = 'Ksh ' + totalPrice.toFixed(2);
-            if (proteinOnlyPreview) proteinOnlyPreview.style.display = 'block';
-        } else if (baseOptions.length > 0 && !sourceId) {
-            // Show base only preview for priced base foods
-            const pricedBases = baseOptions.filter(function(option) {
-                return option.dataset.type === 'priced';
-            });
-            if (pricedBases.length > 0) {
-                const baseNames = [];
-                let totalPrice = 0;
-                
-                pricedBases.forEach(function(option) {
-                    const baseName = option.text.split(' (+Ksh')[0];
-                    const basePrice = parseFloat(option.dataset.price) || 0;
-                    baseNames.push(baseName + ' (+Ksh ' + basePrice + ')');
-                    totalPrice += basePrice;
-                });
-
-                if (comboPreviewText) comboPreviewText.textContent = baseNames.join(' + ') + ' × ' + quantity;
-                if (comboPreviewPrice) comboPreviewPrice.textContent = 'Ksh ' + (totalPrice * quantity).toFixed(2);
-                if (customComboPreview) customComboPreview.style.display = 'block';
+            // Format price display - leave blank for free items
+            let priceDisplay = '';
+            if (totalPrice > 0) {
+                priceDisplay = 'Ugx ' + totalPrice.toFixed(2);
             }
+
+            if (proteinPreviewText) proteinPreviewText.textContent = sourceName + ' × ' + quantity;
+            if (proteinPreviewPrice) proteinPreviewPrice.textContent = priceDisplay;
+            if (proteinOnlyPreview) proteinOnlyPreview.style.display = 'block';
         }
+        // Removed base-only preview since base foods alone are not allowed
     }
 
     function addCustomCombo() {
@@ -150,20 +143,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const sourceId = customSourceSelect.value;
         const quantity = parseInt(customQuantity.value) || 1;
 
-        // Check if we have priced base foods without protein (base only)
-        const pricedBases = baseOptions.filter(function(option) {
-            return option.dataset.type === 'priced';
-        });
-        
-        if (baseOptions.length > 0 && !sourceId && pricedBases.length > 0) {
-            // Handle priced base foods without protein
-            addBaseOnlyItems(baseOptions, quantity);
-        } else if (baseOptions.length > 0 && sourceId) {
-            // Handle custom combo with base + protein
-            addCustomComboWithProtein(baseOptions, sourceId, quantity);
-        } else {
-            alert('Please select at least one base food and a protein source, or priced base foods only.');
+        // Validate: Base foods must be paired with protein source
+        if (baseOptions.length > 0 && !sourceId) {
+            alert('Please select a protein source to go with your base food(s). Base foods cannot be ordered alone.');
             return;
+        }
+
+        // Validate: Must have either base+protein or protein only
+        if (baseOptions.length === 0 && !sourceId) {
+            alert('Please select at least one base food with a protein source, or a protein source alone.');
+            return;
+        }
+
+        // Allow base foods with protein OR protein only
+        if (baseOptions.length > 0 && sourceId) {
+            addCustomComboWithProtein(baseOptions, sourceId, quantity);
+        } else if (!baseOptions.length && sourceId) {
+            addProteinOnly();
         }
 
         // Reset form
@@ -171,6 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
         customSourceSelect.selectedIndex = 0;
         customQuantity.value = 1;
         if (customComboPreview) customComboPreview.style.display = 'none';
+        if (proteinOnlyPreview) proteinOnlyPreview.style.display = 'none';
 
         updateOrderTotal();
     }
@@ -178,32 +175,35 @@ document.addEventListener('DOMContentLoaded', function() {
     function addCustomComboWithProtein(baseOptions, sourceId, quantity) {
         const sourceOption = customSourceSelect.options[customSourceSelect.selectedIndex];
         
-        // Calculate total price
+        // Calculate total price - include ALL base options (free and priced)
         let totalPrice = 0;
+        const baseNames = [];
+        const baseIds = [];
+        
         baseOptions.forEach(function(option) {
-            totalPrice += parseFloat(option.dataset.price) || 0;
-        });
-        totalPrice += parseFloat(sourceOption.dataset.price) || 0;
-
-        // Build display name
-        const baseNames = baseOptions.map(function(option) {
-            const baseName = option.text.split(' (+Ksh')[0];
+            const baseName = option.text.split(' (+Ugx')[0].trim();
             const basePrice = parseFloat(option.dataset.price) || 0;
             const baseType = option.dataset.type;
             
+            // Add to base names for display
             if (baseType === 'priced') {
-                return baseName + ' (+' + basePrice + ')';
+                baseNames.push(baseName + ' (+Ugx ' + basePrice + ')');
+                totalPrice += basePrice;
+            } else {
+                baseNames.push(baseName);
             }
-            return baseName;
+            
+            baseIds.push(option.value);
         });
         
-        const sourceName = sourceOption.text.split(' - Ksh')[0];
+        // Add protein price
+        const sourcePrice = parseFloat(sourceOption.dataset.price) || 0;
+        totalPrice += sourcePrice;
+        
+        const sourceName = sourceOption.text.split(' - Ugx')[0].trim();
         const displayName = 'Custom: ' + baseNames.join(' + ') + ' with ' + sourceName;
-        const baseIds = baseOptions.map(function(option) {
-            return option.value;
-        });
 
-        // Create hidden inputs
+        // Create hidden inputs for ALL base foods (free and priced)
         createHiddenInput('custom_base_items[]', baseIds.join(','));
         createHiddenInput('custom_source_items[]', sourceId);
         createHiddenInput('custom_quantities[]', quantity);
@@ -211,27 +211,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Add to order items (check for duplicates)
         addOrderItem(displayName, totalPrice, quantity, 'custom_combo');
-    }
-
-    function addBaseOnlyItems(baseOptions, quantity) {
-        const pricedBases = baseOptions.filter(function(option) {
-            return option.dataset.type === 'priced';
-        });
-        
-        pricedBases.forEach(function(baseOption) {
-            const baseName = baseOption.text.split(' (+Ksh')[0];
-            const basePrice = parseFloat(baseOption.dataset.price) || 0;
-            const displayName = baseName + ' (Base Only)';
-
-            // Create hidden inputs for each priced base
-            createHiddenInput('custom_base_items[]', baseOption.value);
-            createHiddenInput('custom_source_items[]', '');
-            createHiddenInput('custom_quantities[]', quantity);
-            createHiddenInput('custom_types[]', 'base_only');
-
-            // Add to order items (check for duplicates)
-            addOrderItem(displayName, basePrice, quantity, 'base_only');
-        });
     }
 
     function addProteinOnly() {
@@ -246,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const sourceOption = customSourceSelect.options[customSourceSelect.selectedIndex];
-        const sourceName = sourceOption.text.split(' - Ksh')[0];
+        const sourceName = sourceOption.text.split(' - Ugx')[0].trim();
         const unitPrice = parseFloat(sourceOption.dataset.price) || 0;
         const displayName = 'Protein Only: ' + sourceName;
 
@@ -329,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 orderItems[itemKey] = {
                     quantity: quantity,
                     unit_price: price,
-                    total_price: price * quantity,
+                    total_price: price * quantity,  // FIXED: Changed = to :
                     display_name: displayName,
                     type: 'regular'
                 };
@@ -353,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
             orderItems[itemKey] = {
                 quantity: quantity,
                 unit_price: unitPrice,
-                total_price: unitPrice * quantity,
+                total_price: unitPrice * quantity,  // FIXED: Changed = to :
                 display_name: displayName,
                 type: type
             };
@@ -382,14 +361,34 @@ document.addEventListener('DOMContentLoaded', function() {
         Object.keys(orderItems).forEach(function(key) {
             const item = orderItems[key];
             if (item.quantity > 0) {
+                // Format price display - leave blank for items with price 0
+                let priceDisplay = '';
+                let subtotalDisplay = '';
+                
+                if (item.unit_price > 0) {
+                    priceDisplay = `Ugx ${item.unit_price.toFixed(2)}`;
+                    subtotalDisplay = `Ugx ${item.total_price.toFixed(2)}`;
+                }
+                
                 const itemElement = document.createElement('div');
                 itemElement.className = 'd-flex justify-content-between align-items-center border-bottom py-2';
+                
+                let priceHtml = '';
+                if (priceDisplay) {
+                    priceHtml = '<small class="text-muted">' + item.quantity + ' × ' + priceDisplay + '</small>';
+                }
+                
+                let subtotalHtml = '';
+                if (subtotalDisplay) {
+                    subtotalHtml = '<div class="fw-bold">' + subtotalDisplay + '</div>';
+                }
+                
                 itemElement.innerHTML = '<div class="flex-grow-1">' +
                     '<div class="fw-medium">' + item.display_name + '</div>' +
-                    '<small class="text-muted">Ksh ' + item.unit_price.toFixed(2) + ' × ' + item.quantity + '</small>' +
+                    priceHtml +
                     '</div>' +
                     '<div class="text-end">' +
-                    '<div class="fw-bold">Ksh ' + item.total_price.toFixed(2) + '</div>' +
+                    subtotalHtml +
                     '<button type="button" class="btn btn-sm btn-outline-danger remove-item" data-key="' + key + '">' +
                     '<i class="fas fa-times"></i>' +
                     '</button>' +
@@ -415,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
             total += orderItems[key].total_price;
         });
         
-        if (orderTotalElement) orderTotalElement.textContent = 'Ksh ' + total.toFixed(2);
+        if (orderTotalElement) orderTotalElement.textContent = 'Ugx ' + total.toFixed(2);
         if (totalAmountInput) totalAmountInput.value = total.toFixed(2);
         
         // Update button state - INCLUDES WAITER VALIDATION
@@ -480,9 +479,7 @@ document.addEventListener('DOMContentLoaded', function() {
         waiterSelect.addEventListener('change', updateOrderTotal);
     }
 
-    // ===============================
-    // NEW CUSTOMER AJAX FUNCTIONALITY
-    // ===============================
+    // New Customer AJAX functionality
     const saveCustomerBtn = document.getElementById('saveCustomerBtn');
     if (saveCustomerBtn) {
         saveCustomerBtn.addEventListener('click', createNewCustomer);
@@ -538,48 +535,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-CSRFToken': getCookie('csrftoken')
             }
         })
-        .then(handleResponse)
-        .then(handleCustomerCreationSuccess)
-        .catch(handleCustomerCreationError)
-        .finally(resetSaveCustomerButton);
-    }
-
-    function handleResponse(response) {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    }
-
-    function handleCustomerCreationSuccess(data) {
-        if (data.success) {
-            // Add new customer to dropdown
-            addCustomerToDropdown(data.customer);
-            
-            // Select the new customer
-            if (customerSelect) {
-                customerSelect.value = data.customer.id;
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
-            // Close modal and reset form
-            closeCustomerModal();
-            
-            // Show success message
-            showAlert('Customer created successfully!', 'success');
-            updateOrderTotal();
-        } else {
-            throw new Error(data.error || 'Failed to create customer');
-        }
-    }
-
-    function handleCustomerCreationError(error) {
-        console.error('Customer creation error:', error);
-        showAlert('Error creating customer: ' + error.message, 'danger');
-    }
-
-    function resetSaveCustomerButton() {
-        saveCustomerBtn.disabled = false;
-        saveCustomerBtn.innerHTML = 'Save Customer';
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Add new customer to dropdown
+                addCustomerToDropdown(data.customer);
+                
+                // Select the new customer
+                if (customerSelect) {
+                    customerSelect.value = data.customer.id;
+                }
+                
+                // Close modal and reset form
+                closeCustomerModal();
+                
+                // Show success message
+                showAlert('Customer created successfully!', 'success');
+                updateOrderTotal();
+            } else {
+                throw new Error(data.error || 'Failed to create customer');
+            }
+        })
+        .catch(error => {
+            showAlert('Error creating customer: ' + error.message, 'danger');
+        })
+        .finally(() => {
+            saveCustomerBtn.disabled = false;
+            saveCustomerBtn.innerHTML = 'Save Customer';
+        });
     }
 
     function addCustomerToDropdown(customer) {
@@ -670,88 +658,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateOrderTotal();
     }
 
-    // Auto-save draft functionality (optional)
-    let autoSaveTimer;
-    function setupAutoSave() {
-        // Clear existing timer
-        if (autoSaveTimer) {
-            clearTimeout(autoSaveTimer);
-        }
-        
-        // Set new timer to save after 30 seconds of inactivity
-        autoSaveTimer = setTimeout(saveOrderDraft, 30000);
-    }
-
-    function saveOrderDraft() {
-        if (Object.keys(orderItems).length === 0) return;
-        
-        const draftData = {
-            items: orderItems,
-            customer_id: customerSelect ? customerSelect.value : null,
-            waiter_id: waiterSelect ? waiterSelect.value : null, // Include waiter in draft
-            order_type: document.getElementById('order_type') ? document.getElementById('order_type').value : null,
-            total: totalAmountInput ? totalAmountInput.value : 0,
-            timestamp: new Date().toISOString()
-        };
-
-        // Save to localStorage
-        localStorage.setItem('orderDraft', JSON.stringify(draftData));
-        console.log('Order draft saved');
-    }
-
-    function loadOrderDraft() {
-        const draft = localStorage.getItem('orderDraft');
-        if (draft) {
-            try {
-                const draftData = JSON.parse(draft);
-                // Implement draft loading logic here
-                console.log('Draft loaded:', draftData);
-                
-                // Ask user if they want to restore draft
-                if (confirm('You have a saved order draft. Would you like to restore it?')) {
-                    // Restore draft data
-                    orderItems = draftData.items || {};
-                    updateOrderDisplay();
-                    updateOrderTotal();
-                    
-                    // Restore customer selection
-                    if (customerSelect && draftData.customer_id) {
-                        customerSelect.value = draftData.customer_id;
-                    }
-                    
-                    // Restore waiter selection
-                    if (waiterSelect && draftData.waiter_id) {
-                        waiterSelect.value = draftData.waiter_id;
-                    }
-                    
-                    // Restore order type
-                    if (document.getElementById('order_type') && draftData.order_type) {
-                        document.getElementById('order_type').value = draftData.order_type;
-                        updateOrderTypeVisibility();
-                    }
-                }
-            } catch (e) {
-                console.error('Error loading draft:', e);
-            }
-        }
-    }
-
-    // Set up auto-save triggers
-    document.addEventListener('input', setupAutoSave);
-    document.addEventListener('change', setupAutoSave);
-
-    // Load draft on page load
-    if (!isEditMode) {
-        loadOrderDraft();
-    }
-
-    // Clear draft when order is successfully submitted
-    if (orderForm) {
-        orderForm.addEventListener('submit', function() {
-            localStorage.removeItem('orderDraft');
-        });
-    }
-
     // Initial update
     updateOrderTotal();
-});
+});  

@@ -574,3 +574,6 @@ def generate_excel_report(report_type, start_date, end_date):
     filename = f"{report_type}_report_{start_date}_to_{end_date}.xlsx"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+

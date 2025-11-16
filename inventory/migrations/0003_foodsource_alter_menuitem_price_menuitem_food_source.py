@@ -33,3 +33,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(blank=True, help_text='Optional: Link to a food source that determines the price', null=True, on_delete=django.db.models.deletion.SET_NULL, to='inventory.foodsource'),
         ),
     ]
+
+
+
+

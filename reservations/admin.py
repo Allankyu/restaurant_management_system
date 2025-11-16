@@ -15,3 +15,6 @@ class ReservationAdmin(admin.ModelAdmin):
     search_fields = ['customer__name', 'table__table_number']
     list_editable = ['status']
     date_hierarchy = 'reservation_date'
+
+
+

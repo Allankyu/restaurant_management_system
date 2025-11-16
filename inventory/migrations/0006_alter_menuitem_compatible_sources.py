@@ -16,3 +16,7 @@ class Migration(migrations.Migration):
             field=models.ManyToManyField(blank=True, limit_choices_to={'item_type': 'source'}, to='inventory.menuitem'),
         ),
     ]
+
+
+
+

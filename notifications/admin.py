@@ -20,3 +20,6 @@ class NotificationLogAdmin(admin.ModelAdmin):
     list_filter = ['status', 'channel', 'template', 'created_at']
     readonly_fields = ['created_at', 'sent_at']
     search_fields = ['recipient', 'subject']
+
+
+

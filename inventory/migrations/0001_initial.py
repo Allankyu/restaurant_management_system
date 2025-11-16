@@ -95,3 +95,7 @@ class Migration(migrations.Migration):
             unique_together={('branch', 'menu_item')},
         ),
     ]
+
+
+
+

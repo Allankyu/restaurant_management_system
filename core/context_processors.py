@@ -12,3 +12,6 @@ def restaurant_info(request):
     return {
         'restaurant': restaurant
     }
+
+
+

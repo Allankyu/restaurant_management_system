@@ -12,3 +12,6 @@ urlpatterns = [
     path('customer/', views.customer_report, name='customer_report'),
     path('generate/', views.generate_report, name='generate_report'),
 ]
+
+
+

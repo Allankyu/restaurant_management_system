@@ -19,7 +19,7 @@ class FoodSource(models.Model):
     is_available = models.BooleanField(default=True)
     
     def __str__(self):
-        return f"{self.name} - Ksh{self.price}"
+        return f"{self.name} - Ugx{self.price}"
 
 def menu_item_image_path(instance, filename):
     """Generate file path for menu item images"""
@@ -43,10 +43,24 @@ class MenuItem(models.Model):
         ('side', 'Side Dish'),
     ]
     
+    BASE_CATEGORIES = [
+        ('free', 'Free Base Food'),
+        ('premium', 'Premium Base Food'),
+    ]
+    
     name = models.CharField(max_length=200)
     description = models.TextField()
     category = models.ForeignKey('FoodCategory', on_delete=models.CASCADE)
     item_type = models.CharField(max_length=10, choices=ITEM_TYPES, default='combo')
+    
+    # NEW FIELD: Distinguish between free and premium base foods
+    base_category = models.CharField(
+        max_length=10, 
+        choices=BASE_CATEGORIES, 
+        blank=True, 
+        null=True,
+        help_text="Only for base items - indicates if base is free or premium"
+    )
     
     # Pricing system
     pricing_type = models.CharField(
@@ -113,6 +127,18 @@ class MenuItem(models.Model):
     def __str__(self):
         return self.name
     
+    def save(self, *args, **kwargs):
+        """Automatically set base_category for base items based on price"""
+        if self.item_type == 'base':
+            if self.price == 0 or self.price is None:
+                self.base_category = 'free'
+            else:
+                self.base_category = 'premium'
+        else:
+            self.base_category = None
+            
+        super().save(*args, **kwargs)
+    
     @property
     def actual_price(self):
         """Get the actual price based on pricing type and item type"""
@@ -150,6 +176,16 @@ class MenuItem(models.Model):
     def is_predefined_meal(self):
         """Check if this is a predefined meal that should show image"""
         return self.item_type in ['combo', 'beverage', 'side']
+    
+    @property
+    def is_free_base(self):
+        """Check if this is a free base food"""
+        return self.item_type == 'base' and self.base_category == 'free'
+    
+    @property
+    def is_premium_base(self):
+        """Check if this is a premium base food"""
+        return self.item_type == 'base' and self.base_category == 'premium'
 
 class Ingredient(models.Model):
     name = models.CharField(max_length=100)

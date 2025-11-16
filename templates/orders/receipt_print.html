@@ -167,7 +167,7 @@
                         {% endif %}
                     </td>
                     <td class="item-qty">{{ item.quantity }}</td>
-                    <td class="item-price">Ksh {{ item.subtotal }}</td>
+                    <td class="item-price">Ugx {{ item.subtotal }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -177,15 +177,15 @@
         <div class="total-section">
             <div class="total-row">
                 <span>Subtotal:</span>
-                <span>Ksh {{ order.total_amount }}</span>
+                <span>Ugx {{ order.total_amount }}</span>
             </div>
             <div class="total-row">
                 <span>Tax (0%):</span>
-                <span>Ksh 0.00</span>
+                <span>Ugx 0.00</span>
             </div>
             <div class="total-row" style="font-weight: bold; border-top: 1px solid #000; padding-top: 3px;">
                 <span>TOTAL:</span>
-                <span>Ksh {{ order.total_amount }}</span>
+                <span>Ugx {{ order.total_amount }}</span>
             </div>
         </div>
         
@@ -217,3 +217,6 @@
     </script>
 </body>
 </html>
+
+
+

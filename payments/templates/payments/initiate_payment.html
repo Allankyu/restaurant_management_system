@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Complete Payment</h2>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Order #{{ order.order_number }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong>Customer:</strong> {{ order.customer.name }}</p>
+                            <p><strong>Order Type:</strong> {{ order.get_order_type_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Total Amount:</strong> UGX {{ order.total_amount }}</p>
+                            <p><strong>Status:</strong> {{ order.get_status_display }}</p>
+                        </div>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="provider" class="form-label">Select Payment Method</label>
+                            <select class="form-select" id="provider" name="provider" required>
+                                <option value="">Choose Payment Provider</option>
+                                {% if 'yo' in available_providers %}
+                                <option value="yo" selected>Yo! Payments (MTN & Airtel)</option>
+                                {% endif %}
+                                {% if 'mtn' in available_providers %}
+                                <option value="mtn">MTN Mobile Money</option>
+                                {% endif %}
+                                {% if 'airtel' in available_providers %}
+                                <option value="airtel">Airtel Money</option>
+                                {% endif %}
+                            </select>
+                            
+                            {% if not available_providers %}
+                            <div class="alert alert-warning mt-2">
+                                <small>No payment providers are currently configured. Please contact administrator.</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone_number" class="form-label">Mobile Money Number</label>
+                            <input type="tel" class="form-control" id="phone_number" name="phone_number" 
+                                   value="{{ order.customer_phone }}" placeholder="256700000000" required>
+                            <div class="form-text">Enter your mobile money number (format: 256700000000)</div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>How it works:</strong><br>
+                            1. Select Yo! Payments to pay with MTN or Airtel Mobile Money<br>
+                            2. Enter your phone number<br>
+                            3. You will receive a payment prompt on your phone<br>
+                            4. Enter your Mobile Money PIN to complete the payment
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg" {% if not available_providers %}disabled{% endif %}>
+                            <i class="fas fa-mobile-alt"></i> Pay UGX {{ order.total_amount }}
+                        </button>
+                        <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

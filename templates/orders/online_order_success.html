@@ -21,7 +21,7 @@
                             <h5 class="card-title">Order Details</h5>
                             <p class="card-text">
                                 <strong>Order Number:</strong> #{{ order.order_number }}<br>
-                                <strong>Total Amount:</strong> Ksh <span id="orderTotalAmount">{{ order.total_amount|floatformat:2 }}</span><br>
+                                <strong>Total Amount:</strong> Ugx <span id="orderTotalAmount">{{ order.total_amount|floatformat:2 }}</span><br>
                                 <strong>Delivery to:</strong> {{ order.delivery_address }}<br>
                                 <strong>Customer:</strong> {{ order.customer.name }} ({{ order.customer.phone }})
                             </p>
@@ -45,9 +45,9 @@
                                                 {{ item.menu_item.name }}
                                             {% endif %}
                                         </div>
-                                        <small class="text-muted">{{ item.quantity }} × Ksh {{ item.unit_price }}</small>
+                                        <small class="text-muted">{{ item.quantity }} × Ugx  {{ item.unit_price }}</small>
                                     </div>
-                                    <span class="fw-bold">Ksh {{ item.get_total|floatformat:2 }}</span>
+                                    <span class="fw-bold">Ugx {{ item.get_total|floatformat:2 }}</span>
                                 </div>
                                 {% endfor %}
                             </div>
@@ -98,3 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+
+
+

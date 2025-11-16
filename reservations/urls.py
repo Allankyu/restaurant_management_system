@@ -15,3 +15,6 @@ urlpatterns = [
     path('tables/<int:pk>/delete/', views.table_delete, name='table_delete'),
     path('tables/<int:pk>/toggle/', views.table_toggle, name='table_toggle'),
 ]
+
+
+

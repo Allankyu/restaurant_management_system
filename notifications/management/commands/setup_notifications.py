@@ -29,7 +29,7 @@ class Command(BaseCommand):
 
 Thank you for your order! Your order #{{ order_number }} has been confirmed.
 
-Total: Ksh {{ total_amount }}
+Total: Ugx {{ total_amount }}
 Delivery Address: {{ delivery_address }}
 
 Estimated delivery time: {{ estimated_time }}
@@ -37,7 +37,7 @@ Estimated delivery time: {{ estimated_time }}
 We'll notify you when your order is out for delivery.
 
 Thank you for choosing us!""",
-                'sms_template': 'Order confirmed! #{{ order_number }}. Total: Ksh {{ total_amount }}. Delivery in {{ estimated_time }}.'
+                'sms_template': 'Order confirmed! #{{ order_number }}. Total: Ugx {{ total_amount }}. Delivery in {{ estimated_time }}.'
             },
             {
                 'name': 'Order Status Update',
@@ -60,12 +60,12 @@ Thank you for your patience!""",
 
 Order #: {{ order_number }}
 Customer: {{ customer_name }}
-Total: Ksh {{ total_amount }}
+Total: Ugx {{ total_amount }}
 Items: {{ item_count }}
 Delivery: {{ delivery_address }}
 
 Please prepare the order.""",
-                'sms_template': 'New order #{{ order_number }} from {{ customer_name }}. Total: Ksh {{ total_amount }}.'
+                'sms_template': 'New order #{{ order_number }} from {{ customer_name }}. Total: Ugx {{ total_amount }}.'
             }
         ]
         
@@ -83,3 +83,6 @@ Please prepare the order.""",
         self.stdout.write(
             self.style.SUCCESS('Successfully setup notification system!')
         )
+
+
+

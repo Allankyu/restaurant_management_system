@@ -15,3 +15,6 @@ class BranchMiddleware(MiddlewareMixin):
         else:
             request.branch = None
             request.employee = None
+
+
+

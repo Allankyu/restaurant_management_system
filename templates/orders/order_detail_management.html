@@ -44,7 +44,7 @@
                             {% if order.order_type == 'delivery' %}
                             {{ order.delivery_address }}<br>
                             {% endif %}
-                            <strong>Ksh {{ order.total_amount }}</strong>
+                            <strong>Ugx {{ order.total_amount }}</strong>
                         </div>
                     </div>
                     
@@ -120,8 +120,8 @@
                                 {% endif %}
                             </td>
                             <td>{{ item.quantity }}</td>
-                            <td>Ksh {{ item.unit_price }}</td>
-                            <td>Ksh {{ item.subtotal }}</td>
+                            <td>Ugx {{ item.unit_price }}</td>
+                            <td>Ugx {{ item.subtotal }}</td>
                             <td>
                                 {% if item.notes %}
                                 <small class="text-muted">{{ item.notes }}</small>
@@ -133,7 +133,7 @@
                     <tfoot>
                         <tr>
                             <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
-                            <td colspan="2"><strong>Ksh {{ order.total_amount }}</strong></td>
+                            <td colspan="2"><strong>Ugx {{ order.total_amount }}</strong></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -142,3 +142,6 @@
     </div>
 </div>
 {% endblock %}
+
+
+

@@ -45,3 +45,6 @@ class PopularMenuItem(models.Model):
     
     class Meta:
         unique_together = ['menu_item', 'date']
+
+
+

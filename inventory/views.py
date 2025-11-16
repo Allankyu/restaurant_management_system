@@ -171,7 +171,7 @@ def menu_item_create(request):
         if form.is_valid():
             menu_item = form.save()
             messages.success(request, f'Menu item "{menu_item.name}" created successfully!')
-            return redirect('inventory:menu_item_list')
+            return redirect('inventory:menu_list')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
@@ -192,7 +192,7 @@ def menu_item_edit(request, pk):
         if form.is_valid():
             menu_item = form.save()
             messages.success(request, f'Menu item "{menu_item.name}" updated successfully!')
-            return redirect('inventory:menu_item_list')
+            return redirect('inventory:menu_list')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
@@ -212,8 +212,11 @@ def menu_item_delete(request, pk):
         menu_item_name = menu_item.name
         menu_item.delete()
         messages.success(request, f'Menu item "{menu_item_name}" deleted successfully!')
-        return redirect('inventory:menu_item_list')
+        return redirect('menu_list')
     
     return render(request, 'inventory/menu_item_confirm_delete.html', {
         'menu_item': menu_item
     })
+
+
+

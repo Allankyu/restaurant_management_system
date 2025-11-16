@@ -68,3 +68,6 @@ class NotificationLog(models.Model):
     
     def __str__(self):
         return f"{self.template.name} to {self.recipient}"
+
+
+

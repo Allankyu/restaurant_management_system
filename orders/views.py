@@ -557,9 +557,9 @@ def view_receipt(request, pk):
     context = {
         'order': order,
         'order_items': order.order_items.all(),
-        'business_name': 'Your Restaurant Name',
-        'business_address': '123 Restaurant Street',
-        'business_phone': '+254 712 345 678',
+        'business_name': 'MAAMA JOAN RESTAURANT',
+        'business_address': '123 NAJJERA 2',
+        'business_phone': '+256 757 389 6969',
     }
     
     return render(request, 'orders/receipt_view.html', context)
@@ -785,11 +785,11 @@ def online_order(request):
         
         # Debug: Print sample items from each category
         if combo_items.count() > 0:
-            print(f"DEBUG: Sample combo: {combo_items.first().name} - Ksh {combo_items.first().actual_price}")
+            print(f"DEBUG: Sample combo: {combo_items.first().name} - Ugx {combo_items.first().actual_price}")
         if beverage_items.count() > 0:
-            print(f"DEBUG: Sample beverage: {beverage_items.first().name} - Ksh {beverage_items.first().actual_price}")
+            print(f"DEBUG: Sample beverage: {beverage_items.first().name} - Ugx {beverage_items.first().actual_price}")
         if side_items.count() > 0:
-            print(f"DEBUG: Sample side: {side_items.first().name} - Ksh {side_items.first().actual_price}")
+            print(f"DEBUG: Sample side: {side_items.first().name} - Ugx {side_items.first().actual_price}")
         
         context = {
             'combo_items': combo_items,
@@ -1108,4 +1108,8 @@ def update_order_status(request, order_id):
         messages.error(request, 'Invalid status')
     
     return redirect('orders:order_detail_management', order_id=order.id)
+
+
+
+
 

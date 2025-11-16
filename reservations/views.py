@@ -362,3 +362,6 @@ def table_toggle(request, pk):
     status = "available" if table.is_available else "occupied"
     messages.success(request, f'Table {table.table_number} is now {status}')
     return redirect('reservations:table_list')
+
+
+

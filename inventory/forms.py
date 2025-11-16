@@ -44,3 +44,6 @@ class MenuItemForm(forms.ModelForm):
             if hasattr(field, 'widget') and hasattr(field.widget, 'attrs'):
                 if field_name != 'is_available':
                     field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' form-control'
+
+
+

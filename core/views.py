@@ -667,3 +667,6 @@ def root_redirect(request):
         return redirect('core:dashboard')  # Go to management dashboard
     else:
         return redirect('core:home')       # Go to public home page
+
+
+

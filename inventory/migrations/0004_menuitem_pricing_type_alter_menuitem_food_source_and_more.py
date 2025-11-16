@@ -28,3 +28,7 @@ class Migration(migrations.Migration):
             field=models.DecimalField(blank=True, decimal_places=2, help_text="Direct price (use when pricing type is 'Direct Price')", max_digits=10, null=True, validators=[django.core.validators.MinValueValidator(0)]),
         ),
     ]
+
+
+
+

@@ -145,6 +145,72 @@
 
     <!-- Right Column - Actions -->
     <div class="col-md-4">
+        <!-- Payment Section -->
+        {% if order.status != 'paid' and order.status != 'cancelled' %}
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-money-bill-wave"></i> Payment
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <!-- Mobile Money Payment Button -->
+                    <a href="{% url 'payments:initiate_payment' order.id %}" class="btn btn-success btn-lg">
+                        <i class="fas fa-mobile-alt"></i> Pay with Mobile Money
+                    </a>
+                    
+                    <!-- Manual Payment Marking -->
+                    <form method="post" action="{% url 'orders:order_update_status' order.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="paid">
+                        <button type="submit" class="btn btn-outline-success">
+                            <i class="fas fa-check-circle"></i> Mark as Paid (Cash/Card)
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Payment Information -->
+                <div class="mt-3 p-3 bg-light rounded">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Mobile Money:</strong> Supports MTN & Airtel Uganda
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% elif order.status == 'paid' %}
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-check-circle"></i> Payment Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <h6 class="alert-heading">Payment Completed</h6>
+                    <p class="mb-0">This order has been paid successfully.</p>
+                </div>
+                
+                <!-- Show payment transactions if any -->
+                {% if order.payment_transactions.exists %}
+                <div class="mt-3">
+                    <h6>Payment History:</h6>
+                    {% for transaction in order.payment_transactions.all %}
+                    <div class="border-start border-3 border-success ps-3 mb-2">
+                        <small>
+                            <strong>{{ transaction.get_provider_display }}</strong><br>
+                            {{ transaction.phone_number }} • UGX {{ transaction.amount }}<br>
+                            <span class="text-muted">{{ transaction.created_at|date:"M d, Y H:i" }}</span>
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Status Update -->
         <div class="card">
             <div class="card-header">
@@ -194,15 +260,7 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    {% if order.status != 'paid' and order.status != 'cancelled' %}
-                    <form method="post" action="{% url 'orders:order_update_status' order.pk %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="status" value="paid">
-                        <button type="submit" class="btn btn-success w-100">
-                            <i class="fas fa-check-circle"></i> Mark as Paid
-                        </button>
-                    </form>
-                    {% endif %}
+                    <!-- Manual payment button removed from here since it's now in the payment section -->
                     
                     {% if order.status != 'cancelled' %}
                     <form method="post" action="{% url 'orders:order_update_status' order.pk %}">

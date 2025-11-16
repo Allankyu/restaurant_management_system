@@ -23,7 +23,6 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <!-- ... customer form fields same as before ... -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -80,21 +79,25 @@
                                         <!-- Free Base Foods -->
                                         <optgroup label="🎁 Free Base Foods">
                                             {% for base in base_items %}
-                                                {% if base.actual_price == 0 or not base.actual_price %}
+                                                {% if base.item_type == 'base' and base.is_free_base %}
                                                 <option value="{{ base.id }}" data-price="0" data-type="free">
                                                     {{ base.name }}
                                                 </option>
                                                 {% endif %}
+                                            {% empty %}
+                                                <option value="" disabled>No free base foods available</option>
                                             {% endfor %}
                                         </optgroup>
                                         <!-- Priced Base Foods -->
                                         <optgroup label="💰 Premium Base Foods (Extra Cost)">
                                             {% for base in base_items %}
-                                                {% if base.actual_price and base.actual_price > 0 %}
+                                                {% if base.item_type == 'base' and base.is_premium_base %}
                                                 <option value="{{ base.id }}" data-price="{{ base.actual_price }}" data-type="priced">
-                                                    {{ base.name }} (+Ksh {{ base.actual_price }})
+                                                    {{ base.name }} (+Ugx {{ base.actual_price }})
                                                 </option>
                                                 {% endif %}
+                                            {% empty %}
+                                                <option value="" disabled>No premium base foods available</option>
                                             {% endfor %}
                                         </optgroup>
                                     </select>
@@ -106,7 +109,7 @@
                                         <option value="">Choose protein source...</option>
                                         {% for source in protein_sources %}
                                         <option value="{{ source.id }}" data-price="{{ source.actual_price }}">
-                                            {{ source.name }} - Ksh {{ source.actual_price }}
+                                            {{ source.name }} - Ugx {{ source.actual_price }}
                                         </option>
                                         {% endfor %}
                                     </select>
@@ -169,7 +172,7 @@
                                             <h6 class="card-title">{{ item.display_name }}</h6>
                                             <p class="card-text small text-muted">{{ item.description|default:"Delicious meal"|truncatewords:15 }}</p>
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <span class="fw-bold text-primary">Ksh {{ item.actual_price }}</span>
+                                                <span class="fw-bold text-primary">Ugx {{ item.actual_price }}</span>
                                                 <div class="input-group input-group-sm" style="width: 120px;">
                                                     <button type="button" class="btn btn-outline-secondary minus-btn" data-item="{{ item.id }}">-</button>
                                                     <input type="number" class="form-control text-center quantity-input" 
@@ -207,7 +210,7 @@
                                             <h6 class="card-title">{{ item.name }}</h6>
                                             <p class="card-text small text-muted">{{ item.description|default:"Refreshing drink"|truncatewords:15 }}</p>
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <span class="fw-bold text-primary">Ksh {{ item.actual_price }}</span>
+                                                <span class="fw-bold text-primary">Ugx {{ item.actual_price }}</span>
                                                 <div class="input-group input-group-sm" style="width: 120px;">
                                                     <button type="button" class="btn btn-outline-secondary minus-btn" data-item="{{ item.id }}">-</button>
                                                     <input type="number" class="form-control text-center quantity-input" 
@@ -245,7 +248,7 @@
                                             <h6 class="card-title">{{ item.name }}</h6>
                                             <p class="card-text small text-muted">{{ item.description|default:"Tasty side dish"|truncatewords:15 }}</p>
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <span class="fw-bold text-primary">Ksh {{ item.actual_price }}</span>
+                                                <span class="fw-bold text-primary">Ugx {{ item.actual_price }}</span>
                                                 <div class="input-group input-group-sm" style="width: 120px;">
                                                     <button type="button" class="btn btn-outline-secondary minus-btn" data-item="{{ item.id }}">-</button>
                                                     <input type="number" class="form-control text-center quantity-input" 
@@ -312,18 +315,14 @@
                                 <div class="border-top pt-2">
                                     <div class="d-flex justify-content-between mb-2">
                                         <span>Subtotal:</span>
-                                        <span id="onlineSubtotal">Ksh 0.00</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Delivery Fee:</span>
-                                        <span id="deliveryFee">Ksh 100.00</span>
+                                        <span id="onlineSubtotal">Ugx 0.00</span>
                                     </div>
                                     <div class="d-flex justify-content-between fw-bold fs-5">
                                         <span>Total:</span>
-                                        <span id="onlineTotal">Ksh 100.00</span>
+                                        <span id="onlineTotal">Ugx 0.00</span>
                                     </div>
                                 </div>
-                                <input type="hidden" name="total_amount" id="onlineTotalAmount" value="100">
+                                <input type="hidden" name="total_amount" id="onlineTotalAmount" value="0">
                                 <input type="hidden" name="order_type" value="delivery">
                                 
                                 <!-- Hidden inputs for custom combos -->

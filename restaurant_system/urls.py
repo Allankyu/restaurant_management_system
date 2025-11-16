@@ -12,6 +12,7 @@ urlpatterns = [
     path('reservations/', include('reservations.urls')),
     path('reports/', include('reports.urls')),
     path('accounts/', include('accounts.urls')),
+    path('payments/', include('payments.urls')),
     
     # Additional features (comment out for now if not created yet)
     # path('suppliers/', include('suppliers.urls')),
@@ -31,3 +32,6 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+
